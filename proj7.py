@@ -26,14 +26,14 @@ aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 # Define the 3D cube coordinates with equal edge lengths
 # You can adjust the scale factor as needed
 edge_length = 0.1  # Adjust this value to set the size of the cube
-cube_pts = np.array([[-edge_length / 2, -edge_length / 2, 0],
+cube_pts = np.array([[-edge_length / 2, -edge_length / 2, edge_length / 2],
+                     [edge_length / 2, -edge_length / 2, edge_length / 2],
+                     [edge_length / 2, edge_length / 2, edge_length / 2],
+                     [-edge_length / 2, edge_length / 2, edge_length / 2],
+                     [-edge_length / 2, -edge_length / 2, 0],
                      [edge_length / 2, -edge_length / 2, 0],
                      [edge_length / 2, edge_length / 2, 0],
-                     [-edge_length / 2, edge_length / 2, 0],
-                     [-edge_length / 2, -edge_length / 2, -edge_length],
-                     [edge_length / 2, -edge_length / 2, -edge_length],
-                     [edge_length / 2, edge_length / 2, -edge_length],
-                     [-edge_length / 2, edge_length / 2, -edge_length]])
+                     [-edge_length / 2, edge_length / 2, 0]])
 
 # Define cube edges
 cube_edges = [[0, 1], [1, 2], [2, 3], [3, 0],
@@ -70,7 +70,7 @@ while True:
 
     # Check if the frame was read successfully
     if not ret:
-        print("Error: Webcam frame not read properly.")
+        print("Error: Could not read frame from webcam.")
         break
 
     # Convert the frame to grayscale for marker detection
