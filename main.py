@@ -82,6 +82,8 @@ while True:
     # Draw a 3D cube with edges and filled area on top of detected markers (if any)
     if ids is not None:
         for i in range(len(ids)):
+            if (ids[i] not in [0, 1]): continue
+            print(ids[i])
             rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 0.05, cameraMatrix, distCoeffs)
             rvec, tvec = rvec.reshape((3, 1)), tvec.reshape((3, 1))
             imgpts, _ = cv2.projectPoints(cube_pts, rvec, tvec, cameraMatrix, distCoeffs)
