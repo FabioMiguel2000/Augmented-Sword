@@ -25,28 +25,6 @@ cv2.resizeWindow("Webcam Feed", frame_width, frame_height)
 # Get the predefined ArUco dictionary (you can use different dictionaries)
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
-# Define the 3D cube coordinates with equal edge lengths
-# You can adjust the scale factor as needed
-edge_length = 0.1  # Adjust this value to set the size of the cube
-cube_pts = np.array([[-edge_length / 2, -edge_length / 2, edge_length / 2],
-                     [edge_length / 2, -edge_length / 2, edge_length / 2],
-                     [edge_length / 2, edge_length / 2, edge_length / 2],
-                     [-edge_length / 2, edge_length / 2, edge_length / 2],
-                     [-edge_length / 2, -edge_length / 2, 0],
-                     [edge_length / 2, -edge_length / 2, 0],
-                     [edge_length / 2, edge_length / 2, 0],
-                     [-edge_length / 2, edge_length / 2, 0]])
-
-# Define cube edges
-cube_edges = [[0, 1], [1, 2], [2, 3], [3, 0],
-              [4, 5], [5, 6], [6, 7], [7, 4],
-              [0, 4], [1, 5], [2, 6], [3, 7]]
-
-# Define cube faces (indices of cube_pts for each face)
-cube_faces = [[0, 1, 2, 3], [4, 5, 6, 7],
-              [0, 1, 5, 4], [1, 2, 6, 5],
-              [2, 3, 7, 6], [3, 0, 4, 7]]
-
 # Provide your estimated calibration values here (replace placeholders)
 fx = 600.0
 fy = 600.0
@@ -62,21 +40,18 @@ k3 = 0.0
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.array([k1, k2, p1, p2, k3])
 
-# Define colors for the edges and filled area
-edge_color = (0, 0, 255)  # Red color for edges
-fill_color = (0, 255, 0)  # Green color for filled area
+# Define the marker's original corners
+value = 100
+marker_orig = np.float32([[0, 0], [value, 0],[value, value],[0, value]])
 
 # Read sword image
 img = cv2.imread('./sword.png')
 assert img is not None, "Image could not be read, check with os.path.exists()"
-# let's downscale the image using new  width and height
-down_width = img.shape[1]//8
-down_height = img.shape[0]//8
+# Downscale the image
+down_width = img.shape[1]//4
+down_height = img.shape[0]//4
 down_points = (down_width, down_height)
 img = cv2.resize(img, down_points, interpolation= cv2.INTER_LINEAR)
-
-rows, cols, _ = img.shape
-img_pts = np.float32([[0, 0], [cols, 0],[cols, rows],[0, rows]]) 
 
 while True:
     # Read a frame from the webcam
@@ -97,35 +72,20 @@ while True:
     if ids is not None:
         for i in range(len(ids)):
             if (ids[i] not in ENABLED_IDS): continue
-            print("IDs:", ids[i])
-            rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 0.05, cameraMatrix, distCoeffs)
+            #print("IDs:", ids[i])
 
-            h, w, _ = img.shape
-            transformation_matrix = cv2.getPerspectiveTransform(img_pts, img_pts)
-
-            overlay_warped = cv2.warpPerspective(img, transformation_matrix, (w, h))
-
-            # Iterate through each pixel 
-            # ToDo: Optimize
-            for i in range(img.shape[0]):
-                for j in range(img.shape[1]):
-                    pixel = overlay_warped[i, j]
-                    
-                    # Check if the pixel is not black (RGB: (0, 0, 0))
-                    if not np.all(pixel <= [50, 50, 50]):
-                        frame[i, j] = pixel
-
-
-            #for face in cube_faces:
-            #    face_pts = imgpts[face].astype(int)
-            #    cv2.fillPoly(frame, [face_pts], fill_color)
-
-            #for edge in cube_edges:
-            #    pt1 = tuple(map(int, imgpts[edge[0]].ravel()))
-            #    pt2 = tuple(map(int, imgpts[edge[1]].ravel()))
-            #    cv2.line(frame, pt1, pt2, edge_color, 2)
+            # Compute the affine transformation
+            M = cv2.getAffineTransform(marker_orig[:3], corners[0].reshape(4, 2)[:3])
+            overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
 
             aruco.drawDetectedMarkers(frame, corners)
+
+            # Define a threshold for what is considered non-black (adjust as needed)
+            threshold = [30, 30, 30]
+            # Find the mask of non-black pixels in overlay_warped
+            non_black_mask = np.all(overlay_warped > threshold, axis=-1)
+            # Use the mask to replace pixels in frame
+            frame[non_black_mask] = overlay_warped[non_black_mask]
 
     # Display the frame in the "Webcam Feed" window
     cv2.imshow("Webcam Feed", frame)
