@@ -2,6 +2,8 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 
+ENABLED_IDS = [0, 1]
+
 # Initialize the webcam (you may need to change the camera index if you have multiple cameras)
 cap = cv2.VideoCapture(0)
 
@@ -64,6 +66,18 @@ distCoeffs = np.array([k1, k2, p1, p2, k3])
 edge_color = (0, 0, 255)  # Red color for edges
 fill_color = (0, 255, 0)  # Green color for filled area
 
+# Read sword image
+img = cv2.imread('./sword.png')
+assert img is not None, "Image could not be read, check with os.path.exists()"
+# let's downscale the image using new  width and height
+down_width = img.shape[1]//8
+down_height = img.shape[0]//8
+down_points = (down_width, down_height)
+img = cv2.resize(img, down_points, interpolation= cv2.INTER_LINEAR)
+
+rows, cols, _ = img.shape
+img_pts = np.float32([[0, 0], [cols, 0],[cols, rows],[0, rows]]) 
+
 while True:
     # Read a frame from the webcam
     ret, frame = cap.read()
@@ -82,20 +96,34 @@ while True:
     # Draw a 3D cube with edges and filled area on top of detected markers (if any)
     if ids is not None:
         for i in range(len(ids)):
-            if (ids[i] not in [0, 1]): continue
-            print(ids[i])
+            if (ids[i] not in ENABLED_IDS): continue
+            print("IDs:", ids[i])
             rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 0.05, cameraMatrix, distCoeffs)
-            rvec, tvec = rvec.reshape((3, 1)), tvec.reshape((3, 1))
-            imgpts, _ = cv2.projectPoints(cube_pts, rvec, tvec, cameraMatrix, distCoeffs)
 
-            for face in cube_faces:
-                face_pts = imgpts[face].astype(int)
-                cv2.fillPoly(frame, [face_pts], fill_color)
+            h, w, _ = img.shape
+            transformation_matrix = cv2.getPerspectiveTransform(img_pts, img_pts)
 
-            for edge in cube_edges:
-                pt1 = tuple(map(int, imgpts[edge[0]].ravel()))
-                pt2 = tuple(map(int, imgpts[edge[1]].ravel()))
-                cv2.line(frame, pt1, pt2, edge_color, 2)
+            overlay_warped = cv2.warpPerspective(img, transformation_matrix, (w, h))
+
+            # Iterate through each pixel 
+            # ToDo: Optimize
+            for i in range(img.shape[0]):
+                for j in range(img.shape[1]):
+                    pixel = overlay_warped[i, j]
+                    
+                    # Check if the pixel is not black (RGB: (0, 0, 0))
+                    if not np.all(pixel <= [50, 50, 50]):
+                        frame[i, j] = pixel
+
+
+            #for face in cube_faces:
+            #    face_pts = imgpts[face].astype(int)
+            #    cv2.fillPoly(frame, [face_pts], fill_color)
+
+            #for edge in cube_edges:
+            #    pt1 = tuple(map(int, imgpts[edge[0]].ravel()))
+            #    pt2 = tuple(map(int, imgpts[edge[1]].ravel()))
+            #    cv2.line(frame, pt1, pt2, edge_color, 2)
 
             aruco.drawDetectedMarkers(frame, corners)
 
