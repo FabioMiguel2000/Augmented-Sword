@@ -44,6 +44,9 @@ distCoeffs = np.array([k1, k2, p1, p2, k3])
 value = 100
 marker_orig = np.float32([[0, 0], [value, 0],[value, value],[0, value]])
 
+# Define a threshold for black pixels
+black_threshold = [30, 30, 30]
+
 # Read sword image
 img = cv2.imread('./sword.png')
 assert img is not None, "Image could not be read, check with os.path.exists()"
@@ -80,10 +83,8 @@ while True:
 
             aruco.drawDetectedMarkers(frame, corners)
 
-            # Define a threshold for what is considered non-black (adjust as needed)
-            threshold = [30, 30, 30]
             # Find the mask of non-black pixels in overlay_warped
-            non_black_mask = np.all(overlay_warped > threshold, axis=-1)
+            non_black_mask = np.all(overlay_warped > black_threshold, axis=-1)
             # Use the mask to replace pixels in frame
             frame[non_black_mask] = overlay_warped[non_black_mask]
 
