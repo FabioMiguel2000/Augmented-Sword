@@ -40,10 +40,6 @@ k3 = 0.0
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.array([k1, k2, p1, p2, k3])
 
-# Define the marker's original corners
-value = 100
-marker_orig = np.float32([[0, 0], [value, 0],[value, value],[0, value]])
-
 # Define a threshold for black pixels
 black_threshold = [30, 30, 30]
 
@@ -54,7 +50,19 @@ assert img is not None, "Image could not be read, check with os.path.exists()"
 down_width = img.shape[1]//4
 down_height = img.shape[0]//4
 down_points = (down_width, down_height)
-img = cv2.resize(img, down_points, interpolation= cv2.INTER_LINEAR)
+img = cv2.resize(img, (down_width,down_height), interpolation= cv2.INTER_LINEAR)
+
+# Define the marker's original corners (ID: 0)
+marker_orig_width = 100
+y_offset = (img.shape[0] - marker_orig_width)
+x_offset = 0
+marker_orig = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
+
+# Define the marker's original corners (ID: 1)
+marker_orig_width = 100
+y_offset = (img.shape[0] - marker_orig_width)
+x_offset = (x_offset + marker_orig_width + (img.shape[1]//2 - marker_orig_width)*2) # Compensate 
+marker_orig1 = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
 
 while True:
     # Read a frame from the webcam
@@ -77,9 +85,22 @@ while True:
             if (ids[i] not in ENABLED_IDS): continue
             #print("IDs:", ids[i])
 
-            # Compute the affine transformation
-            M = cv2.getAffineTransform(marker_orig[:3], corners[0].reshape(4, 2)[:3])
-            overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
+            if (ids[i] == 1):
+                # Compute the affine transformation
+                M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
+                overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
+                overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
+
+                T_M = np.float32([[1,0,-0], [0, 1, 0]])
+                overlay_warped = cv2.warpAffine(overlay_warped_flipped, T_M, (frame_width, frame_height))
+            else:
+                # Compute the affine transformation
+                M = cv2.getAffineTransform(marker_orig[1:4], corners[0].reshape(4, 2)[1:4])
+                overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
+                overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
+
+                T_M = np.float32([[1,0,0], [0, 1, 0]])
+                overlay_warped = cv2.warpAffine(overlay_warped, T_M, (frame_width, frame_height))
 
             aruco.drawDetectedMarkers(frame, corners)
 
