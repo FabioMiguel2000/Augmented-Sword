@@ -88,19 +88,12 @@ while True:
             if (ids[i] == 1):
                 # Compute the affine transformation
                 M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
-                overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
                 overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
-
-                T_M = np.float32([[1,0,-0], [0, 1, 0]])
-                overlay_warped = cv2.warpAffine(overlay_warped_flipped, T_M, (frame_width, frame_height))
+                overlay_warped = overlay_warped_flipped
             else:
                 # Compute the affine transformation
                 M = cv2.getAffineTransform(marker_orig[1:4], corners[0].reshape(4, 2)[1:4])
                 overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
-                overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
-
-                T_M = np.float32([[1,0,0], [0, 1, 0]])
-                overlay_warped = cv2.warpAffine(overlay_warped, T_M, (frame_width, frame_height))
 
             aruco.drawDetectedMarkers(frame, corners)
 
