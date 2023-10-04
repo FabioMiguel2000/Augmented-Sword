@@ -61,7 +61,7 @@ marker_orig = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_o
 # Define the marker's original corners (ID: 1)
 marker_orig_width = 100
 y_offset = (img.shape[0] - marker_orig_width)
-x_offset = (x_offset + marker_orig_width + (img.shape[1]//2 - marker_orig_width)*2) # Compensate 
+x_offset = (x_offset + marker_orig_width + (img.shape[1]//2 - marker_orig_width)*2)
 marker_orig1 = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
 
 while True:
