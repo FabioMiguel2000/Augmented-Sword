@@ -54,15 +54,20 @@ img = cv2.resize(img, (down_width,down_height), interpolation= cv2.INTER_LINEAR)
 
 # Define the marker's original corners (ID: 0)
 marker_orig_width = 100
-y_offset = (img.shape[0] - marker_orig_width)
-x_offset = 0
+y_offset = (img.shape[0] - marker_orig_width)//2
+x_offset = (img.shape[1] - marker_orig_width)//2
 marker_orig = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
+# Rotate marker_orig by ~120 degrees
+rotation_matrix = cv2.getRotationMatrix2D((x_offset + marker_orig_width/2, y_offset + marker_orig_width/2), 114 + 180, 1)
+marker_orig = cv2.transform(marker_orig.reshape(-1, 1, 2), rotation_matrix).reshape(4, 2)
 
 # Define the marker's original corners (ID: 1)
-marker_orig_width = 100
-y_offset = (img.shape[0] - marker_orig_width)
-x_offset = (x_offset + marker_orig_width + (img.shape[1]//2 - marker_orig_width)*2)
+y_offset = y_offset
+x_offset = x_offset
 marker_orig1 = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
+# Rotate marker_orig1 by ~(-120) degrees
+rotation_matrix = cv2.getRotationMatrix2D((x_offset + marker_orig_width/2, y_offset + marker_orig_width/2), -114 + 180, 1)
+marker_orig1 = cv2.transform(marker_orig1.reshape(-1, 1, 2), rotation_matrix).reshape(4, 2)
 
 while True:
     # Read a frame from the webcam
