@@ -1,6 +1,7 @@
 import cv2
 import cv2.aruco as aruco
 import numpy as np
+from constants import *
 
 ENABLED_IDS = [0, 1]
 
@@ -26,15 +27,15 @@ cv2.resizeWindow("Webcam Feed", frame_width, frame_height)
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
 # Provide your estimated calibration values here (replace placeholders)
-fx = 600.0
-fy = 600.0
-cx = frame_width / 2
-cy = frame_height / 2
-k1 = 0.0
-k2 = 0.0
-p1 = 0.0
-p2 = 0.0
-k3 = 0.0
+# fx = 600.0
+# fy = 600.0
+# cx = frame_width / 2
+# cy = frame_height / 2
+# k1 = 0.0
+# k2 = 0.0
+# p1 = 0.0
+# p2 = 0.0
+# k3 = 0.0
 
 # Construct the camera matrix and distortion coefficients
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
