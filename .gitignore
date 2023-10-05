@@ -170,3 +170,6 @@ cython_debug/
 
 # Visual Studio Code
 .vscode
+
+# Ignore constants.py
+constants.py
