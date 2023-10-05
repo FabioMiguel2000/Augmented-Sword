@@ -1,5 +1,4 @@
 import cv2
-import os
 
 cameraCapture = cv2.VideoCapture(1)
 num = 1
