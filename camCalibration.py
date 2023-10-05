@@ -57,7 +57,18 @@ print("\n\nDistortion Coefficients:\nk1x:\t",dist[0][0],
 print("\n\nRotation Vectors:\n ", rvecs)
 print("\n\nTranslation Vectors:\n ", tvecs)
 
-
+f = open("constants.py", "w")
+f.write("fx="+ str(mtx[0][0]) +
+      "\nfy="+ str(mtx[1][1]) +
+      "\ncx="+ str(mtx[0][2])+
+      "\ncy="+ str(mtx[1][2])+
+      "\nk1=" + str(dist[0][0]) +
+      "\nk2="+ str(dist[0][1]) +
+      "\np1="+ str(dist[0][2]) +
+      "\np2="+ str(dist[0][3]) +
+      "\nk3="+ str(dist[0][4])     
+      )
+f.close()
 
 img = cv.imread('./img/samples/uncalibrated_image1.png')
 h,  w = img.shape[:2]
