@@ -173,3 +173,7 @@ cython_debug/
 
 # Ignore constants.py
 constants.py
+
+# Ignore images
+img/samples/results/*.png
+img/samples/training/*.png
