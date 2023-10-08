@@ -12,11 +12,11 @@
 ### Conda environment setup
 1. After installing Miniconda, create a conda environment:
 ```shell
-conda create -n ENV_NAME python=3.11
+conda create -n augmented_sword python=3.11
 ```
 2. Activate the environment:
 ```shell
-conda activate ENV_NAME
+conda activate augmented_sword
 ```
 3. Install the necessary libraries: 
 ```shell
@@ -30,7 +30,12 @@ In order to display the AR virtual sword, the user simply needs to hold a cube, 
 - **Right now it detects `4x4` markers generated in `https://chev.me/arucogen/`**
 
 ### How to run
-1. Make sure the `ENV_NAME` environment is activated.
+1. Make sure the `augmented_sword` environment is activated and you're under the `src/` directory:
+    ```shell
+    conda activate augmented_sword
+
+    cd src/
+    ```
 2.
     **Windows**: Using the Command Line, inside the project directory:
     ```shell
@@ -42,7 +47,7 @@ In order to display the AR virtual sword, the user simply needs to hold a cube, 
     ```shell
     python3 main.py 
     ```
-3. The program will wait for a key press, 'q', to close the window and exit.
+3. The program will wait for `q` to be pressed, to close the window and exit.
 
 ### How to remove
 1. Remove the created environment:
