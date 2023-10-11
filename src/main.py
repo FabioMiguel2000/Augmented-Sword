@@ -101,15 +101,24 @@ while True:
         overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
         overlay_warped = overlay_warped_flipped
 
-        # for ids, corner, i in zip(markerIds, corners, total_markers):
-        #     # if (ids[i] not in ENABLED_IDS): continue
-            
-        #     distance = np.sqrt(tVec[i][0][2] ** 2 + tVec[i][0][0] ** 2 + tVec[i][0][1] ** 2)
+        shortest_distance = 9999
+        selected_corner = corners[0]
+        selected_id = 0
 
-        #     #print("IDs:", ids[i])
-        #     M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
-        #     overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
-        #     overlay_warped = overlay_warped_flipped
+        for id, corner, i in zip(ids, corners, total_markers):
+            # if (ids[i] not in ENABLED_IDS): continue
+            
+            distance = np.sqrt(tVec[i][0][2] ** 2 + tVec[i][0][0] ** 2 + tVec[i][0][1] ** 2)
+
+            if distance <= shortest_distance:
+                shortest_distance = distance
+                selected_corner = corner
+                selected_id = id
+
+            #print("IDs:", ids[i])
+            M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
+            overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
+            overlay_warped = overlay_warped_flipped
 
             # print(ids)
             # if (ids[i] == 1):
@@ -121,7 +130,8 @@ while True:
             #     # Compute the affine transformation
             #     M = cv2.getAffineTransform(marker_orig[1:4], corners[0].reshape(4, 2)[1:4])
             #     overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
-        corner = corners[0]
+
+        corner = selected_corner
         corner = corner.reshape(4, 2)
         corner = corner.astype(int)
         top_right = corner[0].ravel()
@@ -130,7 +140,7 @@ while True:
         bottom_left = corner[3].ravel()
         cv2.putText(
             frame,
-            f"id: {ids[0][0]} Dist: {round(distance, 2)}",
+            f"id: {selected_id[0]} Dist: {round(shortest_distance, 2)}",
             top_right,
             cv2.FONT_HERSHEY_PLAIN,
             1.3,
