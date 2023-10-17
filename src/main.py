@@ -86,6 +86,30 @@ while True:
     # Convert the frame to grayscale for marker detection
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+    _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+
+    blurred = cv2.GaussianBlur(binary, (5, 5), 0)
+
+
+    contours, _ = cv2.findContours(blurred, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Iterate through the detected contours and filter for markers
+    markers = []
+    for contour in contours:
+        # Adjust these values based on your marker's characteristics
+        if len(contour) >= 4 and cv2.contourArea(contour) > 100:
+            markers.append(contour)
+
+    print("print: ",markers)
+
+    # Draw detected markers on the original image
+    for marker in markers:
+        cv2.drawContours(frame, [marker], -1, (0, 255, 0), 2)
+    
+    cv2.imshow("Blur Camera", frame)
+    
+
+    # cv2.imshow("Contours Camera", contours)
     # Detect ArUco markers in the frame
     corners, ids, rejected = aruco.detectMarkers(gray, aruco_dict)
 
