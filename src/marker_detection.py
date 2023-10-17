@@ -93,11 +93,18 @@ def findUsingBlobDectetion():
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+# Define a function to calculate the angle between two vectors
+def angle_between_vectors(v1, v2):
+    dot_product = np.dot(v1, v2)
+    magnitude_v1 = np.linalg.norm(v1)
+    magnitude_v2 = np.linalg.norm(v2)
+    return np.arccos(dot_product / (magnitude_v1 * magnitude_v2))
+
 def regionLabelling():
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Step 2: Binarization (Thresholding)
-    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+    _, binary = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
 
     inverted_image = cv2.bitwise_not(binary)
 
@@ -114,7 +121,7 @@ def regionLabelling():
     # Create a colored label image
     colored_label_image = np.zeros((labeled_image.shape[0], labeled_image.shape[1], 3), dtype=np.uint8)
 
-    min_area_threshold = 1000  # Adjust this threshold as needed
+    min_area_threshold = 50000  # Adjust this threshold as needed
 
     # Define the aspect ratio range for rectangular regions
     aspect_ratio_min = 0.7
@@ -127,7 +134,7 @@ def regionLabelling():
         x, y, w, h, area = stats[label]
         aspect_ratio = float(w) / h
         
-        # Filter out non-rectangular regions
+        # Filter out small regions based on area and non-rectangular regions
         if stats[label, cv2.CC_STAT_AREA] >= min_area_threshold and aspect_ratio_min <= aspect_ratio <= aspect_ratio_max:
             # Generate a random color for each label
             color = np.random.randint(0, 255, size=3)
@@ -138,6 +145,60 @@ def regionLabelling():
     print("Regions found", label_num)
     # Display the labeled image
     cv2.imshow('Labeled Image', colored_label_image)
+
+    # Apply a Gaussian blur to reduce noise and improve contour detection
+    blurred = cv2.GaussianBlur(colored_label_image, (5, 5), 0)
+
+    # Perform edge detection using the Canny edge detector
+    edges = cv2.Canny(blurred, threshold1=30, threshold2=150)
+
+    # Find the contours in the edge-detected image
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Draw the contours on the original image
+    contour_image = image.copy()
+
+    cv2.drawContours(contour_image, contours, -1, (0, 255, 0), 2)
+
+    # Display the image with detected contours
+    cv2.imshow('Contour Detection', contour_image)
+
+    # Initialize a list to store the filtered corners
+    filtered_corners = []
+
+    # Iterate through the detected contours and filter corners using quadrilateral fitting
+    for contour in contours:
+        epsilon = 0.04 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, epsilon, True)
+
+        if len(approx) == 4:
+            # Ensure that the approximated contour is a quadrilateral
+            approx = approx.reshape(-1, 2)
+            
+            # Calculate the angles between the sides of the quadrilateral
+            angles = []
+            for i in range(4):
+                v1 = approx[(i + 1) % 4] - approx[i]
+                v2 = approx[(i + 2) % 4] - approx[(i + 1) % 4]
+                angle = angle_between_vectors(v1, v2)
+                angles.append(angle)
+            
+            # Define a threshold for angle differences (e.g., 10 degrees)
+            max_angle_diff = np.deg2rad(30)
+            
+            # Check if opposite sides are approximately parallel
+            if np.abs(angles[0] - angles[2]) < max_angle_diff and np.abs(angles[1] - angles[3]) < max_angle_diff:
+                filtered_corners.extend(approx)
+
+    # Draw the filtered corners on a copy of the original image
+    corner_image = image.copy()
+    for point in filtered_corners:
+        x, y = point
+        cv2.circle(corner_image, (x, y), 20, (255, 0, 0), -1)
+
+    # Display the image with detected contours and corners
+    cv2.imshow('Contour Detection with Corners', corner_image)
+
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
