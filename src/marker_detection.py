@@ -1,9 +1,6 @@
 import cv2
 import numpy as np
 
-image = cv2.imread('./example2.png')
-original_marker = cv2.imread('marker.png')
-
 # Define a function to calculate the angle between two vectors
 def angle_between_vectors(v1, v2):
     dot_product = np.dot(v1, v2)
@@ -118,33 +115,17 @@ def find_corners_from_countours(image, contours):
 
     return group_of_corners
 
-    
+def detect_marker(image_path, marker_path):
 
-def regionLabelling():
-    # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    image = cv2.imread(image_path)
+    original_marker = cv2.imread(marker_path)
 
-    # # Step 2: Binarization (Thresholding)
-    # _, binary = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY)
-
-    # inverted_image = cv2.bitwise_not(binary)
-
-    # cv2.imshow('Binary', inverted_image)
-
-    binary_image = image_binarization('./example2.png', 150, 0, 1)
+    binary_image = image_binarization(image_path, 150, 0, 1)
 
     colored_label_image = connected_components(binary_image)
 
     # Display the labeled image
     cv2.imshow('Connected Component Image', colored_label_image)
-
-    # # Apply a Gaussian blur to reduce noise and improve contour detection
-    # blurred = cv2.GaussianBlur(colored_label_image, (5, 5), 0)
-
-    # # Perform edge detection using the Canny edge detector
-    # edges = cv2.Canny(blurred, threshold1=30, threshold2=150)
-
-    # # Find the contours in the edge-detected image
-    # contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     contours = find_contours(colored_label_image)
 
@@ -155,43 +136,6 @@ def regionLabelling():
 
     # Display the image with detected contours
     cv2.imshow('Contour Detection', contour_image)
-
-    # # Initialize a list to store the filtered corners
-    # filtered_corners = []
-    # group_of_corners = []
-
-    # # Iterate through the detected contours and filter corners using quadrilateral fitting
-    # for contour in contours:
-    #     epsilon = 0.04 * cv2.arcLength(contour, True)
-    #     approx = cv2.approxPolyDP(contour, epsilon, True)
-
-    #     if len(approx) == 4:
-    #         # Ensure that the approximated contour is a quadrilateral
-    #         approx = approx.reshape(-1, 2)
-            
-    #         # Calculate the angles between the sides of the quadrilateral
-    #         angles = []
-    #         for i in range(4):
-    #             v1 = approx[(i + 1) % 4] - approx[i]
-    #             v2 = approx[(i + 2) % 4] - approx[(i + 1) % 4]
-    #             angle = angle_between_vectors(v1, v2)
-    #             angles.append(angle)
-            
-    #         # Define a threshold for angle differences (e.g., 10 degrees)
-    #         max_angle_diff = np.deg2rad(30)
-            
-    #         # Check if opposite sides are approximately parallel
-    #         if np.abs(angles[0] - angles[2]) < max_angle_diff and np.abs(angles[1] - angles[3]) < max_angle_diff:
-    #             group_of_corners.append([approx])
-    #             filtered_corners.extend(approx)
-
-    # Draw the filtered corners on a copy of the original image
-    # corner_image = image.copy()
-    # for point in filtered_corners:
-    #     x, y = point
-    #     cv2.circle(corner_image, (x, y), 20, (255, 0, 0), -1)
-    
-    # cv2.imshow('Contour Detection with Corners', corner_image)
 
     group_of_corners = find_corners_from_countours(image, contours)
 
@@ -233,14 +177,21 @@ def regionLabelling():
             result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
             
             if best_result < result:
+                detected_marker_corners = selected_corners
                 detected_marker = normalized_square_gray
                 best_result = result
 
-    print(best_result)
+    print("Template Matching Result = ", str(best_result[0][0]) + "\n")
 
     cv2.imshow("Detected Marker", detected_marker)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-regionLabelling()
+    return detected_marker_corners
+
+
+image_path = '../img/samples/examples/example_2.png'
+marker_path = '../img/samples/marker_1.png'
+
+detect_marker(image_path, marker_path)
