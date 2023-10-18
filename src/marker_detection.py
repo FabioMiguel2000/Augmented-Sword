@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 image = cv2.imread('./example2.png')
+original_marker = cv2.imread('marker.png')
 
 def findSquare():
 
@@ -77,7 +78,6 @@ def findUsingBlobDectetion():
     for i in filtered_blobs:
         if len(corners) == 4:
             final_markers.append(i)
-            print("final")
 
     # Step 8: Refine Corner Coordinates (if needed)
     # You can use a corner refinement technique like sub-pixel corner detection here if desired.
@@ -121,7 +121,7 @@ def regionLabelling():
     # Create a colored label image
     colored_label_image = np.zeros((labeled_image.shape[0], labeled_image.shape[1], 3), dtype=np.uint8)
 
-    min_area_threshold = 50000  # Adjust this threshold as needed
+    min_area_threshold = 20000  # Adjust this threshold as needed
 
     # Define the aspect ratio range for rectangular regions
     aspect_ratio_min = 0.7
@@ -142,7 +142,11 @@ def regionLabelling():
             # Set pixels with the current label to the chosen color
             colored_label_image[labeled_image == label] = color
 
-    print("Regions found", label_num)
+            label_num +=1
+
+            
+
+    print("\nConnected Components found: ", label_num)
     # Display the labeled image
     cv2.imshow('Labeled Image', colored_label_image)
 
@@ -165,6 +169,7 @@ def regionLabelling():
 
     # Initialize a list to store the filtered corners
     filtered_corners = []
+    group_of_corners = []
 
     # Iterate through the detected contours and filter corners using quadrilateral fitting
     for contour in contours:
@@ -188,6 +193,7 @@ def regionLabelling():
             
             # Check if opposite sides are approximately parallel
             if np.abs(angles[0] - angles[2]) < max_angle_diff and np.abs(angles[1] - angles[3]) < max_angle_diff:
+                group_of_corners.append([approx])
                 filtered_corners.extend(approx)
 
     # Draw the filtered corners on a copy of the original image
@@ -195,9 +201,57 @@ def regionLabelling():
     for point in filtered_corners:
         x, y = point
         cv2.circle(corner_image, (x, y), 20, (255, 0, 0), -1)
-
-    # Display the image with detected contours and corners
+    
     cv2.imshow('Contour Detection with Corners', corner_image)
+
+    corners = np.int0(filtered_corners)
+
+    best_result = 0 
+
+    print("Countours found = ", len(group_of_corners))
+
+    for group in group_of_corners:
+        selected_corners = group[0]
+
+        selected_corners = sorted(selected_corners, key=lambda x: x[0])
+        selected_corners = sorted(selected_corners, key=lambda x: x[1])
+
+        square_size =  original_marker.shape[0]  # Adjust this value as needed
+
+        # Create the normalized square points
+        normalized_corners = np.array([[0, 0], [square_size, 0], [0, square_size], [square_size, square_size]], dtype=np.float32)
+
+        # Calculate the perspective transformation matrix
+        M = cv2.getPerspectiveTransform(np.float32(selected_corners), normalized_corners)
+
+        # Apply the perspective transformation
+        normalized_square = cv2.warpPerspective(image, M, (square_size, square_size))
+        
+        cv2.imshow("Original Marker ", original_marker)
+
+        # Ensure that both images have the same dimensions
+        normalized_square = cv2.resize(normalized_square, (original_marker.shape[1], original_marker.shape[0]))
+
+        # Convert the images to grayscale for SSIM calculation
+        original_marker_gray = cv2.cvtColor(original_marker, cv2.COLOR_BGR2GRAY)
+        normalized_square_gray = cv2.cvtColor(normalized_square, cv2.COLOR_BGR2GRAY)
+        normalized_square_gray = cv2.flip(normalized_square_gray, 1)
+        _, normalized_square_gray = cv2.threshold(normalized_square_gray, 128, 255, cv2.THRESH_BINARY)
+        # Compare the detected marker with the original marker image in the 4 possible rotations
+        for i in range(4):
+            # Rotate 90 degrees counterclockwise
+            normalized_square_gray = cv2.transpose(normalized_square_gray)
+            normalized_square_gray = cv2.flip(normalized_square_gray, flipCode=0)
+            # mse = ((rotated_image - image2_gray) ** 2).mean() # Sum square difference
+            result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
+            
+            if best_result < result:
+                detected_marker = normalized_square_gray
+                best_result = result
+
+    print(best_result)
+
+    cv2.imshow("Normalized Square", detected_marker)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
