@@ -4,95 +4,6 @@ import numpy as np
 image = cv2.imread('./example2.png')
 original_marker = cv2.imread('marker.png')
 
-def findSquare():
-
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-
-    edges = cv2.Canny(blurred, 50, 150)
-
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Minimum area threshold to discard small polygons
-    min_area_threshold = 20000  # Adjust this value according to your needs
-
-    detected_markers = []
-
-    for contour in contours:
-
-        area = cv2.contourArea(contour)
-
-        # Approximate the contour to a polygon
-        epsilon = 0.04 * cv2.arcLength(contour, True)
-        approx = cv2.approxPolyDP(contour, epsilon, True)
-
-        # If the polygon has 3 to 6 vertices, it's considered a marker
-        if 3 <= len(approx) <= 6 and area >= min_area_threshold:
-            detected_markers.append(approx)
-            print(area)
-
-    cv2.drawContours(image, detected_markers, -1, (0, 255, 0), 2)
-
-    # Display the image
-    cv2.imshow('Detected Markers', image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-def findUsingBlobDectetion():
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Step 2: Binarization (Thresholding)
-    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-
-    # Step 3: Connected Components (Blobs) Detection
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary, connectivity=8)
-
-    # Step 4: Checking for Blob Size
-    filtered_blobs = []
-
-    for i, stat in enumerate(stats):
-        x, y, w, h, area = stat
-        if area > 100 and area < 5000:  # Adjust these values based on your marker size
-            filtered_blobs.append(i)
-            print("filtered blob = ", i)
-
-    # Step 5: Detect Borders of Blobs
-    border_image = np.zeros_like(binary)
-    for i in filtered_blobs:
-        blob_mask = np.uint8(labels == i)
-        contours, _ = cv2.findContours(blob_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        print(contours)
-        cv2.drawContours(border_image, contours, -1, 255, -1)
-
-    # Step 6: Detect Corners of Blobs
-    corner_image = np.zeros_like(binary)
-    corners = cv2.goodFeaturesToTrack(border_image, maxCorners=4, qualityLevel=0.01, minDistance=10)
-    corners = np.int0(corners)
-
-    print(corners)
-
-    # Step 7: Reject Blobs That Are Not Quadrilaterals
-    final_markers = []
-
-    for i in filtered_blobs:
-        if len(corners) == 4:
-            final_markers.append(i)
-
-    # Step 8: Refine Corner Coordinates (if needed)
-    # You can use a corner refinement technique like sub-pixel corner detection here if desired.
-
-    # Draw the final markers on the original image
-    for i in final_markers:
-        blob_mask = np.uint8(labels == i)
-        contours, _ = cv2.findContours(blob_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(image, contours, -1, (0, 255, 0), 2)
-
-    # Display the result
-    cv2.imshow('Detected Markers', image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
 # Define a function to calculate the angle between two vectors
 def angle_between_vectors(v1, v2):
     dot_product = np.dot(v1, v2)
@@ -143,8 +54,6 @@ def regionLabelling():
             colored_label_image[labeled_image == label] = color
 
             label_num +=1
-
-            
 
     print("\nConnected Components found: ", label_num)
     # Display the labeled image
@@ -204,8 +113,6 @@ def regionLabelling():
     
     cv2.imshow('Contour Detection with Corners', corner_image)
 
-    corners = np.int0(filtered_corners)
-
     best_result = 0 
 
     print("Countours found = ", len(group_of_corners))
@@ -251,7 +158,7 @@ def regionLabelling():
 
     print(best_result)
 
-    cv2.imshow("Normalized Square", detected_marker)
+    cv2.imshow("Detected Marker", detected_marker)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
