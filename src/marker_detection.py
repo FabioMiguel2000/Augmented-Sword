@@ -279,10 +279,10 @@ def detect_marker_on_frame(frame, original_marker):
                 break
         ix+=1
 
-    cv2.drawContours(frame, detected_group_contours, -1, (0, 255, 0), 10)
+    cv2.drawContours(frame, detected_group_contours, -1, (0, 255, 0), 5)
     for point in detected_marker_corners:
         x, y = point
-        cv2.circle(frame, (x, y), 20, (255, 0, 0), -1)
+        cv2.circle(frame, (x, y), 5, (255, 0, 0), -1)
     
     return frame, np.array(detected_marker_corners)
 
