@@ -10,29 +10,23 @@ image = cv2.imread("image_with_marker.jpg")
 
 # Function to draw a 3D pyramid on the marker
 def draw_pyramid(image, marker_corners):
+    pyramid_height = 200
     if len(marker_corners) == 4:
-        # Calculate the center of the marker
-        center_x = int((marker_corners[0][0] + marker_corners[1][0] + marker_corners[2][0] + marker_corners[3][0] ) / 4)
-        center_y = int((marker_corners[0][1] + marker_corners[1][1] + marker_corners[2][1] + marker_corners[3][1]) / 4)
-
-        # Define the 3D pyramid's vertices relative to the marker's position
-        pyramid_height = 200
-        pyramid_base_width = 80
-        pyramid_apex = (center_x, center_y - pyramid_height)
-        pyramid_base = [
-            (center_x - pyramid_base_width // 2, center_y),
-            (center_x + pyramid_base_width // 2, center_y),
-            (center_x, center_y + pyramid_base_width)
-        ]
+        apex = (int((marker_corners[0][0] + marker_corners[2][0]) / 2),
+                int((marker_corners[0][1] + marker_corners[2][1]) / 2) - pyramid_height)
 
         # Draw the edges of the 3D pyramid using cv2.line()
-        for point1, point2 in [(pyramid_apex, pyramid_base[0]),
-                               (pyramid_apex, pyramid_base[1]),
-                               (pyramid_apex, pyramid_base[2]),
-                               (pyramid_base[0], pyramid_base[1]),
-                               (pyramid_base[1], pyramid_base[2]),
-                               (pyramid_base[2], pyramid_base[0])]:
+        for i in range(4):
+            point1 = marker_corners[i]
+            point2 = marker_corners[(i + 1) % 4]
             cv2.line(image, point1, point2, (0, 255, 0), 2)
+
+            # Connect each marker corner to the apex of the pyramid
+            cv2.line(image, marker_corners[i], apex, (0, 255, 0), 2)
+
+        # Connect the apex to form the base of the pyramid
+        for i in range(4):
+            cv2.line(image, apex, marker_corners[i], (0, 255, 0), 2)
 
     return image
 

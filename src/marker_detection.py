@@ -26,7 +26,7 @@ def image_binarization(image, THRESHOLD_VALUE = 128, USE_OTSU_METHOD = 1, INVERT
 
     return binary_image
 
-def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RATIO_MAX = 1.45, MIN_AREA_THRESHOLD = 5000):
+def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RATIO_MAX = 1.45, MIN_AREA_THRESHOLD = 2000):
     # `num_labels` gives the total number of labeled regions
     # `labeled_image` is an image with each pixel labeled with its region's ID
     # `stats` is a NumPy array containing statistics for each labeled region
