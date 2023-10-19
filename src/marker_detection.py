@@ -137,7 +137,7 @@ def find_corners_from_countours(image, contours):
     
     cv2.imshow('Contour Detection with Corners', corner_image)
 
-    print("Countours found = ", len(group_of_corners))
+    print("Relevant Connected Components found = ", len(group_of_corners))
 
     return group_of_corners, group_of_contours
 
@@ -227,6 +227,69 @@ def detect_marker(frame = object, image_path= '', marker_path = ''):
         return [], []
     return detected_marker_corners, group_of_contours
 
+def detect_marker_on_frame(frame, original_marker):
+
+    binary_image = image_binarization(frame, 150, 0, 1)
+
+    _, (_, component_contours) = connected_components(binary_image, frame)
+
+    group_of_corners, group_of_contours = find_corners_from_countours(frame, component_contours)
+
+    detected_marker_corners = []
+    detected_group_contours = []
+    ix=0
+
+    for group in group_of_corners:
+        selected_corners = group[0]
+
+        selected_corners = sorted(selected_corners, key=lambda x: x[0])
+        selected_corners = sorted(selected_corners, key=lambda x: x[1])
+
+        square_size =  original_marker.shape[0]  # Adjust this value as needed
+
+        # Create the normalized square points
+        normalized_corners = np.array([[0, 0], [square_size, 0], [0, square_size], [square_size, square_size]], dtype=np.float32)
+
+        # Calculate the perspective transformation matrix
+        M = cv2.getPerspectiveTransform(np.float32(selected_corners), normalized_corners)
+
+        # Apply the perspective transformation
+        normalized_square = cv2.warpPerspective(frame, M, (square_size, square_size))
+        
+
+        # Ensure that both images have the same dimensions
+        normalized_square = cv2.resize(normalized_square, (original_marker.shape[1], original_marker.shape[0]))
+
+        # Convert the images to grayscale for SSIM calculation
+        original_marker_gray = cv2.cvtColor(original_marker, cv2.COLOR_BGR2GRAY)
+        normalized_square_gray = cv2.cvtColor(normalized_square, cv2.COLOR_BGR2GRAY)
+        normalized_square_gray = cv2.flip(normalized_square_gray, 1)
+        _, normalized_square_gray = cv2.threshold(normalized_square_gray, 128, 255, cv2.THRESH_BINARY)
+        # Compare the detected marker with the original marker image in the 4 possible rotations
+        for i in range(4):
+            # Rotate 90 degrees counterclockwise
+            normalized_square_gray = cv2.transpose(normalized_square_gray)
+            normalized_square_gray = cv2.flip(normalized_square_gray, flipCode=0)
+
+            # Use Template Matching to compare the detected marker with the marker image
+            result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
+            
+            print(result)
+            if result > 0.40:
+                detected_marker_corners = selected_corners
+                detected_group_contours = group_of_contours[ix]
+                break
+        ix+=1
+
+    cv2.drawContours(frame, detected_group_contours, -1, (0, 255, 0), 10)
+    for point in detected_marker_corners:
+        x, y = point
+        cv2.circle(frame, (x, y), 20, (255, 0, 0), -1)
+
+    cv2.imshow("Detected ", frame)
+    
+    return frame
+
 def test(image, marker_path = ''):
 
     # image = cv2.imread(image_path)
@@ -235,11 +298,9 @@ def test(image, marker_path = ''):
 
     binary_image = image_binarization(image, 150, 0, 1)
 
-    colored_label_image, (component_images, component_contours) = connected_components(binary_image, image)
+    _colored_label_image, (_component_images, component_contours) = connected_components(binary_image, image)
 
     group_of_corners, group_of_contours = find_corners_from_countours(image, component_contours)
-
-    best_result = 0 
 
     detected_marker_corners = []
     detected_group_contours = []
@@ -281,7 +342,7 @@ def test(image, marker_path = ''):
             result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
             
             # if best_result < result:
-            if result > 0.85:
+            if result > 0.75:
                 detected_marker_corners = selected_corners
                 detected_marker = normalized_square_gray
                 detected_group_contours = group_of_contours[ix]

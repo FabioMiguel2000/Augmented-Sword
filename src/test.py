@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from marker_detection import test
+from marker_detection import detect_marker_on_frame
 
 
 # Initialize the webcam (you may need to change the camera index if you have multiple cameras)
@@ -79,41 +79,8 @@ while True:
         print("Error: Could not read frame from webcam.")
         break
 
-    # corners, _ = detect_marker(frame=frame, marker_path='../img/samples/marker_1.png')
-    frame = test(frame, '../img/samples/marker_1.png')
-    # # print(contours)
-    # if corners != [] :
-    #     corners = np.array(corners, dtype=np.int32)
-
-    #     # Find the extreme points (minimum and maximum x and y)
-    #     min_x = np.min(corners[:, 0])
-    #     max_x = np.max(corners[:, 0])
-    #     min_y = np.min(corners[:, 1])
-    #     max_y = np.max(corners[:, 1])
-
-    #     # Create a new array with ordered corner points
-    #     ordered_corner_points = np.array([[min_x, min_y], [max_x, min_y], [max_x, max_y], [min_x, max_y]], dtype=np.int32)
-
-    #     # Reshape the corner points for OpenCV
-    #     # print(contours)
-        
-    #     # cv2.polylines(frame, [ordered_corner_points], isClosed=True, color=(0, 255, 0), thickness=2)
-    #     # cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
-    #     # Create a mask image and draw a filled rectangle for the bounding box
-    #     # Create an empty mask with the same size as the image
-    #     mask = np.zeros_like(frame)
-
-    #     # Fill the polygon defined by the corner points with white (255)
-    #     cv2.fillPoly(mask, [ordered_corner_points], (255, 255, 255))
-
-    #     # Convert the mask to grayscale
-    #     gray_mask = cv2.cvtCpythoolor(mask, cv2.COLOR_BGR2GRAY)
-
-    #     # Find the contour of the filled polygon
-    #     contours, _ = cv2.findContours(gray_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    #     # Draw the contour on the original image
-    #     cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
+    original_marker = cv2.imread('../img/samples/marker_1.png')
+    frame = detect_marker_on_frame(frame, original_marker)
 
     cv2.imshow("Webcam Feed", frame)
 

@@ -1,7 +1,7 @@
 import cv2
 import cv2.aruco as aruco
 import numpy as np
-from marker_detection import detect_marker
+from marker_detection import detect_marker_on_frame
 
 ENABLED_IDS = [0, 1] # Marker IDs to be considered for recognition
 
