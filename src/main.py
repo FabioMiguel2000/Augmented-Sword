@@ -1,6 +1,7 @@
 import cv2
 import cv2.aruco as aruco
 import numpy as np
+from marker_detection import detect_marker
 
 ENABLED_IDS = [0, 1] # Marker IDs to be considered for recognition
 
@@ -88,61 +89,54 @@ while True:
 
     _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
 
-    blurred = cv2.GaussianBlur(binary, (5, 5), 0)
-
-
-    contours, _ = cv2.findContours(blurred, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Iterate through the detected contours and filter for markers
-    markers = []
-    for contour in contours:
-        # Adjust these values based on your marker's characteristics
-        if len(contour) >= 4 and cv2.contourArea(contour) > 100:
-            markers.append(contour)
-
-    print("print: ",markers)
-
-    # Draw detected markers on the original image
-    for marker in markers:
-        cv2.drawContours(frame, [marker], -1, (0, 255, 0), 2)
-    
-    cv2.imshow("Blur Camera", frame)
-    
-
     # cv2.imshow("Contours Camera", contours)
     # Detect ArUco markers in the frame
     corners, ids, rejected = aruco.detectMarkers(gray, aruco_dict)
 
+    # corners = detect_marker(frame=frame, marker_path='../img/samples/marker_1.png')
+
+    print(corners)
+
+    rVec, tVec, _ = aruco.estimatePoseSingleMarkers(corners, cube_marker_size, np.array(mtx), np.array(dist))
+    
+    M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
+
+    overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
+    overlay_warped = overlay_warped_flipped
+
+    # M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
+    # overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
+    # overlay_warped = overlay_warped_flipped
     # Draw a 3D cube with edges and filled area on top of detected markers (if any)
-    if ids is not None:
-        rVec, tVec, _ = aruco.estimatePoseSingleMarkers(corners, cube_marker_size, np.array(mtx), np.array(dist))
+    # if ids is not None:
+    #     rVec, tVec, _ = aruco.estimatePoseSingleMarkers(corners, cube_marker_size, np.array(mtx), np.array(dist))
 
-        total_markers = range(0, ids.size)
+    #     total_markers = range(0, ids.size)
 
-        distance = np.sqrt(tVec[0][0][2] ** 2 + tVec[0][0][0] ** 2 + tVec[0][0][1] ** 2)
+    #     distance = np.sqrt(tVec[0][0][2] ** 2 + tVec[0][0][0] ** 2 + tVec[0][0][1] ** 2)
 
-        M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
-        overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
-        overlay_warped = overlay_warped_flipped
+    #     M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
+    #     overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
+    #     overlay_warped = overlay_warped_flipped
 
-        shortest_distance = 9999
-        selected_corner = corners[0]
-        selected_id = 0
+    #     shortest_distance = 9999
+    #     selected_corner = corners[0]
+    #     selected_id = 0
 
-        for id, corner, i in zip(ids, corners, total_markers):
-            # if (ids[i] not in ENABLED_IDS): continue
+    #     for id, corner, i in zip(ids, corners, total_markers):
+    #         # if (ids[i] not in ENABLED_IDS): continue
             
-            distance = np.sqrt(tVec[i][0][2] ** 2 + tVec[i][0][0] ** 2 + tVec[i][0][1] ** 2)
+    #         distance = np.sqrt(tVec[i][0][2] ** 2 + tVec[i][0][0] ** 2 + tVec[i][0][1] ** 2)
 
-            if distance <= shortest_distance:
-                shortest_distance = distance
-                selected_corner = corner
-                selected_id = id
+    #         if distance <= shortest_distance:
+    #             shortest_distance = distance
+    #             selected_corner = corner
+    #             selected_id = id
 
-            #print("IDs:", ids[i])
-            M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
-            overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
-            overlay_warped = overlay_warped_flipped
+    #         #print("IDs:", ids[i])
+    #         M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
+    #         overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
+    #         overlay_warped = overlay_warped_flipped
 
             # print(ids)
             # if (ids[i] == 1):
@@ -155,30 +149,30 @@ while True:
             #     M = cv2.getAffineTransform(marker_orig[1:4], corners[0].reshape(4, 2)[1:4])
             #     overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
 
-        corner = selected_corner
-        corner = corner.reshape(4, 2)
-        corner = corner.astype(int)
-        top_right = corner[0].ravel()
-        top_left = corner[1].ravel()
-        bottom_right = corner[2].ravel()
-        bottom_left = corner[3].ravel()
-        cv2.putText(
-            frame,
-            f"id: {selected_id[0]} Dist: {round(shortest_distance, 2)}",
-            top_right,
-            cv2.FONT_HERSHEY_PLAIN,
-            1.3,
-            (0, 0, 255),
-            2,
-            cv2.LINE_AA,
-        )
+        # corner = selected_corner
+        # corner = corner.reshape(4, 2)
+        # corner = corner.astype(int)
+        # top_right = corner[0].ravel()
+        # top_left = corner[1].ravel()
+        # bottom_right = corner[2].ravel()
+        # bottom_left = corner[3].ravel()
+        # cv2.putText(
+        #     frame,
+        #     f"id: {selected_id[0]} Dist: {round(shortest_distance, 2)}",
+        #     top_right,
+        #     cv2.FONT_HERSHEY_PLAIN,
+        #     1.3,
+        #     (0, 0, 255),
+        #     2,
+        #     cv2.LINE_AA,
+        # )
 
-        aruco.drawDetectedMarkers(frame, [corners[0]])
+        # aruco.drawDetectedMarkers(frame, [corners[0]])
 
-        # Find the mask of non-black pixels in overlay_warped
-        non_black_mask = np.all(overlay_warped > black_threshold, axis=-1)
-        # Use the mask to replace pixels in frame
-        frame[non_black_mask] = overlay_warped[non_black_mask]
+    # Find the mask of non-black pixels in overlay_warped
+    non_black_mask = np.all(overlay_warped > black_threshold, axis=-1)
+    # Use the mask to replace pixels in frame
+    frame[non_black_mask] = overlay_warped[non_black_mask]
 
     # Display the frame in the "Webcam Feed" window
     cv2.imshow("Webcam Feed", frame)
