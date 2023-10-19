@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 
-# image = cv2.imread('../img/samples/examples/example_2.png')
-
 # Define a function to calculate the angle between two vectors
 def angle_between_vectors(v1, v2):
     dot_product = np.dot(v1, v2)
@@ -28,7 +26,7 @@ def image_binarization(image, THRESHOLD_VALUE = 128, USE_OTSU_METHOD = 1, INVERT
 
     return binary_image
 
-def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RATIO_MAX = 1.45, MIN_AREA_THRESHOLD = 20000):
+def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RATIO_MAX = 1.45, MIN_AREA_THRESHOLD = 5000):
     # `num_labels` gives the total number of labeled regions
     # `labeled_image` is an image with each pixel labeled with its region's ID
     # `stats` is a NumPy array containing statistics for each labeled region
@@ -135,7 +133,7 @@ def find_corners_from_countours(image, contours):
         x, y = point
         cv2.circle(corner_image, (x, y), 20, (255, 0, 0), -1)
     
-    cv2.imshow('Contour Detection with Corners', corner_image)
+    # cv2.imshow('Contour Detection with Corners', corner_image)
 
     print("Relevant Connected Components found = ", len(group_of_corners))
 
@@ -275,7 +273,7 @@ def detect_marker_on_frame(frame, original_marker):
             result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
             
             print(result)
-            if result > 0.40:
+            if result > 0.70:
                 detected_marker_corners = selected_corners
                 detected_group_contours = group_of_contours[ix]
                 break
@@ -285,89 +283,8 @@ def detect_marker_on_frame(frame, original_marker):
     for point in detected_marker_corners:
         x, y = point
         cv2.circle(frame, (x, y), 20, (255, 0, 0), -1)
-
-    cv2.imshow("Detected ", frame)
     
     return frame
-
-def test(image, marker_path = ''):
-
-    # image = cv2.imread(image_path)
-
-    original_marker = cv2.imread(marker_path)
-
-    binary_image = image_binarization(image, 150, 0, 1)
-
-    _colored_label_image, (_component_images, component_contours) = connected_components(binary_image, image)
-
-    group_of_corners, group_of_contours = find_corners_from_countours(image, component_contours)
-
-    detected_marker_corners = []
-    detected_group_contours = []
-    ix=0
-
-    for group in group_of_corners:
-        selected_corners = group[0]
-
-        selected_corners = sorted(selected_corners, key=lambda x: x[0])
-        selected_corners = sorted(selected_corners, key=lambda x: x[1])
-
-        square_size =  original_marker.shape[0]  # Adjust this value as needed
-
-        # Create the normalized square points
-        normalized_corners = np.array([[0, 0], [square_size, 0], [0, square_size], [square_size, square_size]], dtype=np.float32)
-
-        # Calculate the perspective transformation matrix
-        M = cv2.getPerspectiveTransform(np.float32(selected_corners), normalized_corners)
-
-        # Apply the perspective transformation
-        normalized_square = cv2.warpPerspective(image, M, (square_size, square_size))
-        
-        # cv2.imshow("Original Marker ", original_marker)
-
-        # Ensure that both images have the same dimensions
-        normalized_square = cv2.resize(normalized_square, (original_marker.shape[1], original_marker.shape[0]))
-
-        # Convert the images to grayscale for SSIM calculation
-        original_marker_gray = cv2.cvtColor(original_marker, cv2.COLOR_BGR2GRAY)
-        normalized_square_gray = cv2.cvtColor(normalized_square, cv2.COLOR_BGR2GRAY)
-        normalized_square_gray = cv2.flip(normalized_square_gray, 1)
-        _, normalized_square_gray = cv2.threshold(normalized_square_gray, 128, 255, cv2.THRESH_BINARY)
-        # Compare the detected marker with the original marker image in the 4 possible rotations
-        for i in range(4):
-            # Rotate 90 degrees counterclockwise
-            normalized_square_gray = cv2.transpose(normalized_square_gray)
-            normalized_square_gray = cv2.flip(normalized_square_gray, flipCode=0)
-            # mse = ((rotated_image - image2_gray) ** 2).mean() # Sum square difference
-            result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
-            
-            # if best_result < result:
-            if result > 0.75:
-                detected_marker_corners = selected_corners
-                detected_marker = normalized_square_gray
-                detected_group_contours = group_of_contours[ix]
-
-                best_result = result
-        ix+=1
-
-    print(detected_group_contours)
-    # group_of_corners, group_of_contours = find_corners_from_countours(image, contours)
-
-    cv2.drawContours(image, detected_group_contours, -1, (0, 255, 0), 10)
-    for point in detected_marker_corners:
-        x, y = point
-        cv2.circle(image, (x, y), 20, (255, 0, 0), -1)
-
-    cv2.imshow("Detected ", image)
-    
-
-    return image
-    # cv2.imshow("Detected Marker", detected_marker)
-    
-    # cv2.imshow("Detected ", image)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-
 
 image_path = '../img/samples/examples/example_2.png'
 marker_path = '../img/samples/marker_1.png'
