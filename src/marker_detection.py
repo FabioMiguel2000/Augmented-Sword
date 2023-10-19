@@ -284,7 +284,7 @@ def detect_marker_on_frame(frame, original_marker):
         x, y = point
         cv2.circle(frame, (x, y), 20, (255, 0, 0), -1)
     
-    return frame
+    return frame, np.array(detected_marker_corners)
 
 image_path = '../img/samples/examples/example_2.png'
 marker_path = '../img/samples/marker_1.png'

@@ -80,7 +80,7 @@ while True:
         break
 
     original_marker = cv2.imread('../img/samples/marker_1.png')
-    frame = detect_marker_on_frame(frame, original_marker)
+    frame, marker_corners = detect_marker_on_frame(frame, original_marker)
 
     cv2.imshow("Webcam Feed", frame)
 
