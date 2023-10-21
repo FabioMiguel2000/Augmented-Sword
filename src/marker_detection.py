@@ -269,6 +269,7 @@ def my_estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
                               [marker_size / 2, marker_size / 2, 0],
                               [marker_size / 2, -marker_size / 2, 0],
                               [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
+    
     # marker_points = np.array([[marker_size / 2, -marker_size / 2, 0],
     #                         [marker_size / 2, marker_size / 2, 0],
     #                         [-marker_size / 2, marker_size / 2, 0],
@@ -393,15 +394,21 @@ def detect_marker_on_frame(frame, original_marker, is_show = 0):
 
             # axis = np.float32([[10,0,0], [0,10,0], [0,0,10]]).reshape(-1,3)
             axis_points_3D = np.array([
-                [0, 0, 0],                     # Origin
-                [7, 0, 0],           # X-axis endpoint
-                [0, 7, 0],           # Y-axis endpoint
-                [0, 0, 7]            # Z-axis endpoint
+                [-7, 7, 0],                     # Origin
+                [7, 7, 0],           # X-axis endpoint
+                [-7, -7, 0],           # Y-axis endpoint
+                [0, 0, 7],            # Z-axis endpoint
             ], dtype=np.float32)
 
             axis_points_2D, jac = cv2.projectPoints(axis_points_3D, rvecs, tvecs, cameraMatrix, distCoeffs)
 
-            axis_points_2D = np.int32(axis_points_2D).reshape(-1, 2)
+            print("axis poiitns float: >>>>> ", axis_points_2D)
+
+            axis_points_2D = np.squeeze(np.round(axis_points_2D).astype(int))
+
+            print("axis poiitns: >>>>> ", axis_points_2D)
+
+            # marker_center = (marker_center_x, marker_center_y)
 
             # Draw X, Y, and Z axes on the image
             frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[1]), (0, 0, 255), 5)  # Red X-axis
