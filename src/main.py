@@ -2,9 +2,6 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 
-# Enable marker IDs for recognition
-ENABLED_IDS = [0, 1, 2, 3, 4]
-
 # Initialize the webcam
 cap = cv2.VideoCapture(0)
 
@@ -30,6 +27,35 @@ cy = frame_height / 2
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.zeros((5, 1))
 
+# Define the 3D coordinates of the markers (top, side faces) on the cube
+# Order: Top, Front, Right, Back, Left
+marker_coordinates_3d = [
+    np.array([[0.0, 0.0, 0.0]]),   # Top marker (ID: 0)
+    np.array([[0.5, 0.0, 0.0]]),   # Front marker (ID: 1)
+    np.array([[0.0, 0.5, 0.0]]),   # Right marker (ID: 2)
+    np.array([[0.0, 0.0, 0.5]]),   # Back marker (ID: 3)
+    np.array([[-0.5, 0.0, 0.0]])  # Left marker (ID: 4)
+]
+
+# Define colors for each side
+colors = [(0, 0, 255),  # Red
+          (0, 255, 0),  # Green
+          (255, 0, 0),  # Blue
+          (255, 255, 0),  # Yellow
+          (0, 255, 255)]  # Cyan
+
+# Define the 3D coordinates of the sword
+sword_3d = np.array([
+    [0.0, 0.0, 0.0],
+    [20.0, 0.0, 0.0],
+    [20.0, 1.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.0, 0.0, -1.0],
+    [20.0, 0.0, -1.0],
+    [20.0, 1.0, -1.0],
+    [0.0, 1.0, -1.0]
+], dtype=np.float32)
+
 while True:
     ret, frame = cap.read()
 
@@ -38,37 +64,20 @@ while True:
         break
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    corners, ids, rejected = aruco.detectMarkers(gray, aruco_dict)
+    corners, ids, _ = aruco.detectMarkers(gray, aruco_dict)
 
     if ids is not None:
         for i in range(len(ids)):
-            if ids[i] in ENABLED_IDS:
-                # Define the 3D sword representation in object coordinates
-                # Make sure it's in the correct data type (e.g., float32)
-                sword_3d = np.array([
-                    [0.0, 0.0, 0.0],
-                    [20.0, 0.0, 0.0],
-                    [20.0, 1.0, 0.0],
-                    [0.0, 1.0, 0.0],
-                    [0.0, 0.0, -1.0],
-                    [20.0, 0.0, -1.0],
-                    [20.0, 1.0, -1.0],
-                    [0.0, 1.0, -1.0]
-                ], dtype=np.float32)
-
-                # Estimate pose for the current marker
+            if ids[i] in range(5):
                 rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 10, cameraMatrix, distCoeffs)
+                marker_id = int(ids[i][0])  # Convert to integer
 
-                # Project the 3D points to the 2D image plane
-                imagePoints, _ = cv2.projectPoints(sword_3d, rvec, tvec, cameraMatrix, distCoeffs)
+                # Draw the wireframe of the sword with the assigned color
+                sword_points, _ = cv2.projectPoints(sword_3d, rvec, tvec, cameraMatrix, distCoeffs)
+                sword_points = np.int32(sword_points).reshape(-1, 2)
+                cv2.polylines(frame, [sword_points], isClosed=True, color=colors[marker_id], thickness=2)
 
-                # Draw the wireframe of the 3D sword
-                for j in range(len(imagePoints)):
-                    pt1 = tuple(map(int, imagePoints[j - 1].ravel()))
-                    pt2 = tuple(map(int, imagePoints[j].ravel()))
-                    cv2.line(frame, pt1, pt2, (0, 0, 255), 2)
-
-            aruco.drawDetectedMarkers(frame, corners)
+    aruco.drawDetectedMarkers(frame, corners)
 
     cv2.imshow("Webcam Feed", frame)
 
@@ -77,5 +86,3 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
-
