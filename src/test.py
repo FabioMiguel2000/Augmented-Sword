@@ -114,52 +114,9 @@ while True:
         break
 
     original_marker = cv2.imread('../img/samples/marker_1.png')
-    frame, marker_corners = detect_marker_on_frame(frame, original_marker)
+    frame = detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs)
 
-    # print(marker_corners)
-    if len(marker_corners) != 0:
-        marker_3d = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]], dtype=np.float32)
-
-        centroid = np.mean(marker_corners, axis=0)
-
-        # Calculate the distance of each corner from the centroid
-        distances = [np.linalg.norm(corner - centroid) for corner in marker_corners]
-
-        # Find the indices of the corners with the maximum and minimum distances
-        top_left_index = np.argmin(distances)
-        bottom_right_index = np.argmax(distances)
-
-        # Remove the top left and bottom right corners from the original list
-        remaining_corners = [corner for i, corner in enumerate(marker_corners) if i != top_left_index and i != bottom_right_index]
-
-        # Find the top right and bottom left corners from the remaining two corners
-        top_right_corner, bottom_left_corner = remaining_corners
-
-        # Now you have separated the corners into top left, top right, bottom left, and bottom right
-        print("Top Left:", marker_corners[top_left_index])
-        print("Top Right:", top_right_corner)
-        print("Bottom Left:", bottom_left_corner)
-        print("Bottom Right:", marker_corners[bottom_right_index])
-
-        print("marker coordinates: " , marker_corners)
-
-        # homography_matrix, _ = cv2.findHomography(marker_corners, marker_3d)
-
-         # Find the rotation and translation vectors.
-        ret,rvecs, tvecs = cv2.solvePnP(marker_3d, marker_corners, cameraMatrix, distCoeffs)
-
-        print("RVEC = ", rvecs)
-        print("TVECS = ", tvecs)
-
-        # Render the X, Y, and Z axes on the marker
-        # You can draw lines or 3D objects using the rotation and translation information
-
-        # Display the result
-        cv2.imshow('Marker Pose Estimation', frame)
-
-
-
-        # Display the result image
+    # Display the result image
     cv2.imshow("Webcam Feed", frame)
 
 
