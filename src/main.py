@@ -27,15 +27,18 @@ cy = frame_height / 2
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.zeros((5, 1))
 
-# Define the 3D coordinates of the markers (top, side faces) on the cube
-# Order: Top, Front, Right, Back, Left
+# Cube size in centimeters
+cube_size = 7.0
+
+# Define the 3D coordinates of the markers on the cube based on the cube size
 marker_coordinates_3d = [
-    np.array([[0.0, 0.0, 0.0]]),   # Top marker (ID: 0)
-    np.array([[0.5, 0.0, 0.0]]),   # Front marker (ID: 1)
-    np.array([[0.0, 0.5, 0.0]]),   # Right marker (ID: 2)
-    np.array([[0.0, 0.0, 0.5]]),   # Back marker (ID: 3)
-    np.array([[-0.5, 0.0, 0.0]])  # Left marker (ID: 4)
+    np.array([[-cube_size / 2, -cube_size / 2, 0.0]]),    # Top marker (ID: 0)
+    np.array([[0.0, -cube_size / 2, cube_size / 2]]),     # Front marker (ID: 1)
+    np.array([[-cube_size / 2, 0.0, cube_size / 2]]),     # Right marker (ID: 2)
+    np.array([[-cube_size / 2, -cube_size / 2, cube_size]]),  # Back marker (ID: 3)
+    np.array([[-cube_size, -cube_size / 2, cube_size / 2]])  # Left marker (ID: 4)
 ]
+
 
 # Define colors for each side
 colors = [(0, 0, 255),  # Red
@@ -72,10 +75,10 @@ while True:
                 rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 10, cameraMatrix, distCoeffs)
                 marker_id = int(ids[i][0])  # Convert to integer
 
-                # Draw the wireframe of the sword with the assigned color
+                # Draw the filled shape of the sword with the assigned color
                 sword_points, _ = cv2.projectPoints(sword_3d, rvec, tvec, cameraMatrix, distCoeffs)
                 sword_points = np.int32(sword_points).reshape(-1, 2)
-                cv2.polylines(frame, [sword_points], isClosed=True, color=colors[marker_id], thickness=2)
+                cv2.fillPoly(frame, [sword_points], color=colors[marker_id])
 
     aruco.drawDetectedMarkers(frame, corners)
 
