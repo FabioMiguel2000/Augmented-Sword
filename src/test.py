@@ -8,6 +8,13 @@ import numpy as np
 # Load the image in which you want to detect the marker
 image = cv2.imread("image_with_marker.jpg")
 
+def draw_axis(img, corners, imgpts):
+    corner = tuple(corners[0].ravel())
+    img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
+    img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
+    img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
+    return img
+
 # Function to draw a 3D pyramid on the marker
 def draw_pyramid(image, marker_corners):
     pyramid_height = 200
@@ -65,8 +72,8 @@ except:
 
 
 # Construct the camera matrix and distortion coefficients
-cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
-distCoeffs = np.array([k1, k2, p1, p2, k3])
+cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
+distCoeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float32)
 
 # Define a threshold for black pixels
 black_threshold = [30, 30, 30]
@@ -109,9 +116,48 @@ while True:
     original_marker = cv2.imread('../img/samples/marker_1.png')
     frame, marker_corners = detect_marker_on_frame(frame, original_marker)
 
-    print(marker_corners)
+    # print(marker_corners)
     if len(marker_corners) != 0:
-        frame = draw_pyramid(frame.copy(), marker_corners)
+        marker_3d = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0]], dtype=np.float32)
+
+        centroid = np.mean(marker_corners, axis=0)
+
+        # Calculate the distance of each corner from the centroid
+        distances = [np.linalg.norm(corner - centroid) for corner in marker_corners]
+
+        # Find the indices of the corners with the maximum and minimum distances
+        top_left_index = np.argmin(distances)
+        bottom_right_index = np.argmax(distances)
+
+        # Remove the top left and bottom right corners from the original list
+        remaining_corners = [corner for i, corner in enumerate(marker_corners) if i != top_left_index and i != bottom_right_index]
+
+        # Find the top right and bottom left corners from the remaining two corners
+        top_right_corner, bottom_left_corner = remaining_corners
+
+        # Now you have separated the corners into top left, top right, bottom left, and bottom right
+        print("Top Left:", marker_corners[top_left_index])
+        print("Top Right:", top_right_corner)
+        print("Bottom Left:", bottom_left_corner)
+        print("Bottom Right:", marker_corners[bottom_right_index])
+
+        print("marker coordinates: " , marker_corners)
+
+        # homography_matrix, _ = cv2.findHomography(marker_corners, marker_3d)
+
+         # Find the rotation and translation vectors.
+        ret,rvecs, tvecs = cv2.solvePnP(marker_3d, marker_corners, cameraMatrix, distCoeffs)
+
+        print("RVEC = ", rvecs)
+        print("TVECS = ", tvecs)
+
+        # Render the X, Y, and Z axes on the marker
+        # You can draw lines or 3D objects using the rotation and translation information
+
+        # Display the result
+        cv2.imshow('Marker Pose Estimation', frame)
+
+
 
         # Display the result image
     cv2.imshow("Webcam Feed", frame)
