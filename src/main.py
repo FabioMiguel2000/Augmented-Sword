@@ -2,121 +2,127 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 
-ENABLED_IDS = [0, 1] # Marker IDs to be considered for recognition
-
-# Initialize the webcam (you may need to change the camera index if you have multiple cameras)
+# Initialize the webcam
 cap = cv2.VideoCapture(0)
 
-# Check if the webcam is opened successfully
 if not cap.isOpened():
     print("Error: Could not open webcam.")
     exit()
 
-# Set the width and height of the frame (you can adjust these values as needed)
 frame_width = 640
 frame_height = 480
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
 
-# Create a window to display the webcam feed
 cv2.namedWindow("Webcam Feed", cv2.WINDOW_NORMAL)
 cv2.resizeWindow("Webcam Feed", frame_width, frame_height)
 
-# Get the predefined ArUco dictionary (you can use different dictionaries)
 aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
 
-try: 
-    from constants import *
-except:
-    print("constants.py not found, using default values")
-    fx = 600.0
-    fy = 600.0
-    cx = frame_width / 2
-    cy = frame_height / 2
-    k1 = 0.0
-    k2 = 0.0
-    p1 = 0.0
-    p2 = 0.0
-    k3 = 0.0
-
-# Construct the camera matrix and distortion coefficients
+# Camera parameters (You may need to adjust these)
+fx = 600.0
+fy = 600.0
+cx = frame_width / 2
+cy = frame_height / 2
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
-distCoeffs = np.array([k1, k2, p1, p2, k3])
+distCoeffs = np.zeros((5, 1))
 
-# Define a threshold for black pixels
-black_threshold = [30, 30, 30]
+# Cube size in centimeters
+cube_size = 7.0
 
-# Read sword image
-img = cv2.imread('../img/sword.png')
-assert img is not None, "Image could not be read, check with os.path.exists()"
-# Downscale the image
-down_width = img.shape[1]//4
-down_height = img.shape[0]//4
-down_points = (down_width, down_height)
-img = cv2.resize(img, (down_width,down_height), interpolation= cv2.INTER_LINEAR)
+# Define the 3D coordinates of the markers on the cube based on the cube size
+marker_coordinates_3d = [
+    np.array([[-cube_size / 2, -cube_size / 2, 0.0]]),    # Top marker (ID: 0)
+    np.array([[0.0, -cube_size / 2, cube_size / 2]]),     # Front marker (ID: 1)
+    np.array([[-cube_size / 2, 0.0, cube_size / 2]]),     # Right marker (ID: 2)
+    np.array([[-cube_size / 2, -cube_size / 2, cube_size]]),  # Back marker (ID: 3)
+    np.array([[-cube_size, -cube_size / 2, cube_size / 2]])  # Left marker (ID: 4)
+]
 
-# Define the marker's original corners (ID: 0)
-marker_orig_width = 100
-y_offset = (img.shape[0] - marker_orig_width)//2
-x_offset = (img.shape[1] - marker_orig_width)//2
-marker_orig = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
-# Rotate marker_orig by ~120 degrees
-rotation_matrix = cv2.getRotationMatrix2D((x_offset + marker_orig_width/2, y_offset + marker_orig_width/2), 114 + 180, 1)
-marker_orig = cv2.transform(marker_orig.reshape(-1, 1, 2), rotation_matrix).reshape(4, 2)
 
-# Define the marker's original corners (ID: 1)
-y_offset = y_offset
-x_offset = x_offset
-marker_orig1 = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
-# Rotate marker_orig1 by ~(-120) degrees
-rotation_matrix = cv2.getRotationMatrix2D((x_offset + marker_orig_width/2, y_offset + marker_orig_width/2), -114 + 180, 1)
-marker_orig1 = cv2.transform(marker_orig1.reshape(-1, 1, 2), rotation_matrix).reshape(4, 2)
+# Define colors for each side
+colors = [(0, 0, 255),  # Red
+          (0, 255, 0),  # Green
+          (255, 0, 0),  # Blue
+          (255, 255, 0),  # Yellow
+          (0, 255, 255)]  # Cyan
+
+# Define the 3D coordinates of the sword
+# Define the 3D coordinates of the sword with a "T" shape handle
+sword_3d_1 = np.array([
+    [0.0, 0.0, 0.0],
+    [20.0, 0.0, 0.0],
+    [20.0, 1.0, 0.0],
+    [0.0, 1.0, 0.0],
+    [0.0, 0.0, -1.0],
+    [20.0, 0.0, -1.0],
+    [20.0, 1.0, -1.0],
+    [0.0, 1.0, -1.0],
+    [8.0, 0.0, 0.0],   # Handle - Top
+    [12.0, 0.0, 0.0],  # Handle - Top
+    [10.0, 0.0, 0.0],  # Handle - Middle (Center)
+    [10.0, 0.0, -4.0],  # Handle - Bottom
+], dtype=np.float32)
+
+## Defining to then scale
+# Define the coordinates for the sword's blade
+blade_1 = np.array([
+    [-7, -7, 1],
+    [7, -7, 1],
+    [0, 90, -3.5],
+], dtype=np.float32)
+
+blade_2 = np.array([
+    [-7, -7, 7],
+    [-7, -7, 0],
+    [0, 90, -3.5],
+], dtype=np.float32)
+
+
+# Define the coordinates for the sword's handle
+handle = np.array([
+    [2.5, 1, 0],   # Bottom of the handle
+    [3, 1, 0],     # Top of the handle
+    [3, 2, 0],     # Handle width
+    [2.5, 2, 0]    # Handle length
+], dtype=np.float32)
+
+# Combine blade and handle coordinates into a single array
+scale_factor = 1.3
+#sword = np.vstack((blade_1, blade_2)) * scale_factor
+sword = blade_1 * scale_factor
 
 while True:
-    # Read a frame from the webcam
     ret, frame = cap.read()
 
-    # Check if the frame was read successfully
     if not ret:
         print("Error: Could not read frame from webcam.")
         break
 
-    # Convert the frame to grayscale for marker detection
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    corners, ids, _ = aruco.detectMarkers(gray, aruco_dict)
 
-    # Detect ArUco markers in the frame
-    corners, ids, rejected = aruco.detectMarkers(gray, aruco_dict)
-
-    # Draw a 3D cube with edges and filled area on top of detected markers (if any)
     if ids is not None:
         for i in range(len(ids)):
-            if (ids[i] not in ENABLED_IDS): continue
-            #print("IDs:", ids[i])
+            if ids[i] in range(5):
+                if (ids[i] != 0):
+                    rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 10, cameraMatrix, distCoeffs)
+                    marker_id = int(ids[i][0])  # Convert to integer
 
-            if (ids[i] == 1):
-                # Compute the affine transformation
-                M = cv2.getAffineTransform(marker_orig1[1:4], corners[0].reshape(4, 2)[1:4])
-                overlay_warped_flipped = cv2.warpAffine(cv2.flip(img,1), M, (frame_width, frame_height))
-                overlay_warped = overlay_warped_flipped
-            else:
-                # Compute the affine transformation
-                M = cv2.getAffineTransform(marker_orig[1:4], corners[0].reshape(4, 2)[1:4])
-                overlay_warped = cv2.warpAffine(img, M, (frame_width, frame_height))
+                    # Draw the filled shape of the sword with the assigned color
+                    sword_points, _ = cv2.projectPoints(sword, rvec, tvec, cameraMatrix, distCoeffs)
+                    sword_points = np.int32(sword_points).reshape(-1, 2)
+                    cv2.fillPoly(frame, [sword_points], color=colors[1])
+                else:
+                    ## ToDo: Handle top marker
+                    continue
 
-            aruco.drawDetectedMarkers(frame, corners)
+    aruco.drawDetectedMarkers(frame, corners)
 
-            # Find the mask of non-black pixels in overlay_warped
-            non_black_mask = np.all(overlay_warped > black_threshold, axis=-1)
-            # Use the mask to replace pixels in frame
-            frame[non_black_mask] = overlay_warped[non_black_mask]
-
-    # Display the frame in the "Webcam Feed" window
     cv2.imshow("Webcam Feed", frame)
 
-    # Check for the 'q' key to exit the program
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# Release the webcam and close all OpenCV windows
 cap.release()
 cv2.destroyAllWindows()
