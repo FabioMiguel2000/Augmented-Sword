@@ -48,7 +48,8 @@ colors = [(0, 0, 255),  # Red
           (0, 255, 255)]  # Cyan
 
 # Define the 3D coordinates of the sword
-sword_3d = np.array([
+# Define the 3D coordinates of the sword with a "T" shape handle
+sword_3d_1 = np.array([
     [0.0, 0.0, 0.0],
     [20.0, 0.0, 0.0],
     [20.0, 1.0, 0.0],
@@ -56,8 +57,40 @@ sword_3d = np.array([
     [0.0, 0.0, -1.0],
     [20.0, 0.0, -1.0],
     [20.0, 1.0, -1.0],
-    [0.0, 1.0, -1.0]
+    [0.0, 1.0, -1.0],
+    [8.0, 0.0, 0.0],   # Handle - Top
+    [12.0, 0.0, 0.0],  # Handle - Top
+    [10.0, 0.0, 0.0],  # Handle - Middle (Center)
+    [10.0, 0.0, -4.0],  # Handle - Bottom
 ], dtype=np.float32)
+
+## Defining to then scale
+# Define the coordinates for the sword's blade
+blade_1 = np.array([
+    [-7, -7, 1],
+    [7, -7, 1],
+    [0, 90, -3.5],
+], dtype=np.float32)
+
+blade_2 = np.array([
+    [-7, -7, 7],
+    [-7, -7, 0],
+    [0, 90, -3.5],
+], dtype=np.float32)
+
+
+# Define the coordinates for the sword's handle
+handle = np.array([
+    [2.5, 1, 0],   # Bottom of the handle
+    [3, 1, 0],     # Top of the handle
+    [3, 2, 0],     # Handle width
+    [2.5, 2, 0]    # Handle length
+], dtype=np.float32)
+
+# Combine blade and handle coordinates into a single array
+scale_factor = 1.3
+#sword = np.vstack((blade_1, blade_2)) * scale_factor
+sword = blade_1 * scale_factor
 
 while True:
     ret, frame = cap.read()
@@ -72,13 +105,17 @@ while True:
     if ids is not None:
         for i in range(len(ids)):
             if ids[i] in range(5):
-                rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 10, cameraMatrix, distCoeffs)
-                marker_id = int(ids[i][0])  # Convert to integer
+                if (ids[i] != 0):
+                    rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 10, cameraMatrix, distCoeffs)
+                    marker_id = int(ids[i][0])  # Convert to integer
 
-                # Draw the filled shape of the sword with the assigned color
-                sword_points, _ = cv2.projectPoints(sword_3d, rvec, tvec, cameraMatrix, distCoeffs)
-                sword_points = np.int32(sword_points).reshape(-1, 2)
-                cv2.fillPoly(frame, [sword_points], color=colors[marker_id])
+                    # Draw the filled shape of the sword with the assigned color
+                    sword_points, _ = cv2.projectPoints(sword, rvec, tvec, cameraMatrix, distCoeffs)
+                    sword_points = np.int32(sword_points).reshape(-1, 2)
+                    cv2.fillPoly(frame, [sword_points], color=colors[1])
+                else:
+                    ## ToDo: Handle top marker
+                    continue
 
     aruco.drawDetectedMarkers(frame, corners)
 
