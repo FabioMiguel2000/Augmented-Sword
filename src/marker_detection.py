@@ -394,9 +394,9 @@ def detect_marker_on_frame(frame, original_marker, is_show = 0):
             # axis = np.float32([[10,0,0], [0,10,0], [0,0,10]]).reshape(-1,3)
             axis_points_3D = np.array([
                 [0, 0, 0],                     # Origin
-                [30, 0, 0],           # X-axis endpoint
-                [0, 30, 0],           # Y-axis endpoint
-                [0, 0, 30]            # Z-axis endpoint
+                [7, 0, 0],           # X-axis endpoint
+                [0, 7, 0],           # Y-axis endpoint
+                [0, 0, 7]            # Z-axis endpoint
             ], dtype=np.float32)
 
             axis_points_2D, jac = cv2.projectPoints(axis_points_3D, rvecs, tvecs, cameraMatrix, distCoeffs)
