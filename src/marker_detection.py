@@ -266,7 +266,7 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
             # Use Template Matching to compare the detected marker with the marker image
             result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
             
-            if result > 0.90:
+            if result > 0.95:
                 detected_marker_corners = selected_corners
                 detected_marker = normalized_square_gray
                 break
@@ -305,15 +305,52 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         [0, 0, 14],            # Z-axis endpoint
     ], dtype=np.float32)
 
-    axis_points_2D, jac = cv2.projectPoints(axis_points_3D, rvecs, tvecs, cameraMatrix, distCoeffs)
+    projected_points, _ = cv2.projectPoints(axis_points_3D, rvecs, tvecs, cameraMatrix, distCoeffs)
 
-    axis_points_2D = np.squeeze(np.round(axis_points_2D).astype(int))
+    # projected_points = np.squeeze(np.round(projected_points).astype(int))
 
     # Draw X, Y, and Z axes on the image
-    frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[1]), (0, 0, 255), 5)  # Red X-axis
-    frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[2]), (0, 255, 0), 5)  # Green Y-axis
-    frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[3]), (255, 0, 0), 5)  # Blue Z-axis
+    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[1]), (0, 0, 255), 5)  # Red X-axis
+    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[2]), (0, 255, 0), 5)  # Green Y-axis
+    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[3]), (255, 0, 0), 5)  # Blue Z-axis
+    # Define the edges of the pyramid
 
+    # Define the 3D coordinates of the cuboid
+    height = 50
+    width = 8
+    depth = 8
+    cuboid_3d = np.array([
+        [0, 0, 0],         # Bottom center
+        [width, 0, 0],     # Bottom front right
+        [width, 0, -depth],  # Bottom back right
+        [0, 0, -depth],    # Bottom back left
+        [0, height, 0],    # Top center
+        [width, height, 0],  # Top front right
+        [width, height, -depth],  # Top back right
+        [0, height, -depth]   # Top back left
+    ], dtype=np.float32)
+
+    x_translation = (14-width)/2  # Adjust the value as needed
+    y_translation = 14-height  # Adjust the value as needed
+    z_translation = depth/2  # Adjust the value as needed
+
+
+    for i in range(len(cuboid_3d)):
+        cuboid_3d[i][0] += x_translation
+        cuboid_3d[i][1] += y_translation
+        cuboid_3d[i][2] += z_translation
+
+    # Solve PnP problem to estimate pose
+    # tvecs, _ = cv2.Rodrigues(tvecs)
+
+    # Project 3D pyramid points onto 2D image
+    points, _ = cv2.projectPoints(cuboid_3d, rvecs, tvecs, cameraMatrix, distCoeffs)
+
+    for i in range(4):
+        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (0, 255, 0), 2)
+        next_index = (i + 1) if i < 3 else 0  # Wrap around to connect the last point to the first
+        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[next_index][0][0]), int(points[next_index][0][1])), (0, 255, 0), 2)
+        cv2.line(frame, (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (int(points[next_index + 4][0][0]), int(points[next_index + 4][0][1])), (0, 255, 0), 2)
     if is_show == 1:
         cv2.imshow("Webcam Feed ", frame)
         if detected_marker is not None:
