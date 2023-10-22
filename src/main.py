@@ -40,7 +40,6 @@ marker_coordinates_3d = [
     np.array([[-cube_size, -cube_size / 2, cube_size / 2]])  # Left marker (ID: 4)
 ]
 
-
 # Define colors for each side
 colors = [(0, 0, 255),  # Red
           (0, 255, 0),  # Green
@@ -187,13 +186,27 @@ while True:
 
     if ids is not None:
         if (ids[0] != 0):
+            print("\n-------------------")
+            print("IDs detected:    ", len(ids), "/ 3")
+            marker_chosen = False
             for id in ids[0]:
-                if (id != 2):
-                    continue
-                print("\n-------------------")
-                print("IDs detected:    ", len(ids), "/ 3")
-                print("ID used:         ", ids[0][0])
-                rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[0], 10, cameraMatrix, distCoeffs)
+                roll_value = 0
+                if (marker_chosen):
+                    break
+                elif (id == 2):
+                    roll_value = 4 # Rotate PI
+                elif (id == 3):
+                    roll_value = 2 # Rotate PI/2
+                
+                # A marker has has been chosen
+                print("ID used:         ", id)
+                marker_chosen = True
+
+                # Roll corners[0]
+                rolled_corners = np.roll(corners[0][0], roll_value)
+
+                # Get the 3D coordinates of the marker
+                rvec, tvec, _ = aruco.estimatePoseSingleMarkers(rolled_corners.reshape(corners[0].shape), 10, cameraMatrix, distCoeffs)
                 marker_id = int(ids[0][0])  # Convert to integer
 
                 # Draw the filled shape of the sword with the assigned color
