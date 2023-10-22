@@ -2,6 +2,7 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 
+
 # Initialize the webcam
 cap = cv2.VideoCapture(0)
 
@@ -66,15 +67,27 @@ sword_3d_1 = np.array([
 
 ## Defining to then scale
 # Define the coordinates for the sword's blade
-blade_1 = np.array([
-    [-7, -7, 1],
-    [7, -7, 1],
+blade_front = np.array([
+    [-8, -8, 1],
+    [8, -8, 1],
     [0, 90, -3.5],
 ], dtype=np.float32)
 
-blade_2 = np.array([
-    [-7, -7, 7],
-    [-7, -7, 0],
+blade_back = np.array([
+    [-8,-8,-18],
+    [8,-8,-18],
+    [0, 90, -3.5],
+], dtype=np.float32)
+
+blade_left = np.array([
+    [-8, -8, -18],
+    [-8, -8, 1],
+    [0, 90, -3.5],
+], dtype=np.float32)
+
+blade_right = np.array([
+    [8, -8, -18],
+    [8, -8, 1],
     [0, 90, -3.5],
 ], dtype=np.float32)
 
@@ -90,7 +103,15 @@ handle = np.array([
 # Combine blade and handle coordinates into a single array
 scale_factor = 1.3
 #sword = np.vstack((blade_1, blade_2)) * scale_factor
-sword = blade_1 * scale_factor
+sword_front = blade_front * scale_factor
+sword_back = blade_back * scale_factor
+sword_left = blade_left * scale_factor
+sword_right = blade_right * scale_factor
+
+
+
+# Marker Priority order for the sword
+marker_priority = [0, 1, 2, 3, 4]
 
 while True:
     ret, frame = cap.read()
@@ -103,6 +124,7 @@ while True:
     corners, ids, _ = aruco.detectMarkers(gray, aruco_dict)
 
     if ids is not None:
+        print("IDs is not None")
         for i in range(len(ids)):
             if ids[i] in range(5):
                 if (ids[i] != 0):
@@ -110,9 +132,22 @@ while True:
                     marker_id = int(ids[i][0])  # Convert to integer
 
                     # Draw the filled shape of the sword with the assigned color
-                    sword_points, _ = cv2.projectPoints(sword, rvec, tvec, cameraMatrix, distCoeffs)
-                    sword_points = np.int32(sword_points).reshape(-1, 2)
-                    cv2.fillPoly(frame, [sword_points], color=colors[1])
+                    sword_points_back, _ = cv2.projectPoints(sword_back, rvec, tvec, cameraMatrix, distCoeffs)
+                    sword_points_back = np.int32(sword_points_back).reshape(-1, 2)
+                    cv2.fillPoly(frame, [sword_points_back], color=colors[0])
+
+                    sword_points_front, _ = cv2.projectPoints(sword_front, rvec, tvec, cameraMatrix, distCoeffs)
+                    sword_points_front = np.int32(sword_points_front).reshape(-1, 2)
+                    cv2.fillPoly(frame, [sword_points_front], color=colors[0])
+
+                    sword_points_left, _ = cv2.projectPoints(sword_left, rvec, tvec, cameraMatrix, distCoeffs)
+                    sword_points_left = np.int32(sword_points_left).reshape(-1, 2)
+                    cv2.fillPoly(frame, [sword_points_left], color=colors[0])
+
+                    sword_points_right, _ = cv2.projectPoints(sword_right, rvec, tvec, cameraMatrix, distCoeffs)
+                    sword_points_right = np.int32(sword_points_right).reshape(-1, 2)
+                    cv2.fillPoly(frame, [sword_points_right], color=colors[0])
+
                 else:
                     ## ToDo: Handle top marker
                     continue
