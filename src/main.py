@@ -48,30 +48,31 @@ colors = [(0, 0, 255),  # Red
           (0, 255, 255)]  # Cyan
 
 # Array of set of coordinates
-shapes = []
+blade = []
+handle = []
 
 # Sword Blades --------------------------------------
 
 # Sword Blades --------------------------------------
-shapes.append(
+blade.append(
     np.array([
     [-cube_size, -cube_size / 2, cube_size/2],
     [cube_size, -cube_size / 2, cube_size/2],
     [0, cube_size*4, -cube_size/2]
 ], dtype=np.float32))
-shapes.append(
+blade.append(
     np.array([
     [-cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [0, cube_size*4, -cube_size/2]
 ], dtype=np.float32))
-shapes.append(
+blade.append(
     np.array([
     [-cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [-cube_size, -cube_size / 2, cube_size/2],
     [0, cube_size*4, -cube_size/2]
 ], dtype=np.float32))
-shapes.append(
+blade.append(
     np.array([
     [cube_size, -cube_size / 2, cube_size/2],
     [cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
@@ -79,7 +80,7 @@ shapes.append(
 ], dtype=np.float32))
 
 # Sword Handle --------------------------------------
-shapes.append(
+handle.append(
     np.array([
     # Top Face
     [-cube_size/4, -cube_size*2, -cube_size/4],
@@ -87,7 +88,7 @@ shapes.append(
     [cube_size/4, -cube_size*2, -3*cube_size/4],
     [-cube_size/4, -cube_size*2, -3*cube_size/4],
 ], dtype=np.float32))
-shapes.append(
+handle.append(
     np.array([
     # Bottom Face
     [-cube_size/4, -5*cube_size/2, -cube_size/4],
@@ -95,7 +96,7 @@ shapes.append(
     [cube_size/4, -5*cube_size/2, -3*cube_size/4],
     [-cube_size/4, -5*cube_size/2, -3*cube_size/4],
 ], dtype=np.float32))
-shapes.append(
+handle.append(
     np.array([
     # Left Face
     [-cube_size/4, -cube_size*2, -3*cube_size/4],
@@ -103,7 +104,7 @@ shapes.append(
     [-cube_size/4, -5*cube_size/2, -cube_size/4],
     [-cube_size/4, -cube_size*2, -cube_size/4],
 ], dtype=np.float32))
-shapes.append(
+handle.append(
     np.array([
     # Right Face
     [cube_size/4, -cube_size*2, -cube_size/4],
@@ -111,7 +112,7 @@ shapes.append(
     [cube_size/4, -5*cube_size/2, -3*cube_size/4],
     [cube_size/4, -cube_size*2, -3*cube_size/4],
 ], dtype=np.float32))
-shapes.append(
+handle.append(
     np.array([
     # Front Face
     [-cube_size/4, -cube_size*2, -cube_size/4],
@@ -119,7 +120,7 @@ shapes.append(
     [cube_size/4, -5*cube_size/2, -cube_size/4],
     [cube_size/4, -cube_size*2, -cube_size/4],
 ], dtype=np.float32))
-shapes.append(
+handle.append(
     np.array([
     # Back Face
     [-cube_size/4, -cube_size*2, -3*cube_size/4],
@@ -131,11 +132,12 @@ shapes.append(
 
 scale_factor = 1.3
 # Scale the shapes
-for i in range(len(shapes)):
-    shapes[i] *= scale_factor
+for i in range(len(handle)):
+    handle[i] *= scale_factor
 
+for i in range(len(blade)):
+    blade[i] *= scale_factor
 
-#sword_lower_handle = lower_handle * scale_factor
 
 while True:
     ret, frame = cap.read()
@@ -165,10 +167,15 @@ while True:
         print("ID used:         ", id)
 
         # Draw the filled shape of the sword with the assigned color
-        for shape in shapes:
+        for shape in blade:
             draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
             draw_shape = np.int32(draw_shape).reshape(-1, 2)
             cv2.fillPoly(frame, [draw_shape], color=colors[1])
+
+        for shape in handle:
+            draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
+            draw_shape = np.int32(draw_shape).reshape(-1, 2)
+            cv2.fillPoly(frame, [draw_shape], color=colors[0])
 
     aruco.drawDetectedMarkers(frame, corners)
 
