@@ -108,11 +108,6 @@ sword_back = blade_back * scale_factor
 sword_left = blade_left * scale_factor
 sword_right = blade_right * scale_factor
 
-
-
-# Marker Priority order for the sword
-marker_priority = [0, 1, 2, 3, 4]
-
 while True:
     ret, frame = cap.read()
 
@@ -124,33 +119,27 @@ while True:
     corners, ids, _ = aruco.detectMarkers(gray, aruco_dict)
 
     if ids is not None:
-        print("IDs is not None")
-        for i in range(len(ids)):
-            if ids[i] in range(5):
-                if (ids[i] != 0):
-                    rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i], 10, cameraMatrix, distCoeffs)
-                    marker_id = int(ids[i][0])  # Convert to integer
+        if (ids[0] != 0):
+            print("ID being used: ", ids[0])
+            rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[0], 10, cameraMatrix, distCoeffs)
+            marker_id = int(ids[0][0])  # Convert to integer
 
-                    # Draw the filled shape of the sword with the assigned color
-                    sword_points_back, _ = cv2.projectPoints(sword_back, rvec, tvec, cameraMatrix, distCoeffs)
-                    sword_points_back = np.int32(sword_points_back).reshape(-1, 2)
-                    cv2.fillPoly(frame, [sword_points_back], color=colors[0])
+            # Draw the filled shape of the sword with the assigned color
+            sword_points_back, _ = cv2.projectPoints(sword_back, rvec, tvec, cameraMatrix, distCoeffs)
+            sword_points_back = np.int32(sword_points_back).reshape(-1, 2)
+            cv2.fillPoly(frame, [sword_points_back], color=colors[0])
 
-                    sword_points_front, _ = cv2.projectPoints(sword_front, rvec, tvec, cameraMatrix, distCoeffs)
-                    sword_points_front = np.int32(sword_points_front).reshape(-1, 2)
-                    cv2.fillPoly(frame, [sword_points_front], color=colors[0])
+            sword_points_front, _ = cv2.projectPoints(sword_front, rvec, tvec, cameraMatrix, distCoeffs)
+            sword_points_front = np.int32(sword_points_front).reshape(-1, 2)
+            cv2.fillPoly(frame, [sword_points_front], color=colors[0])
 
-                    sword_points_left, _ = cv2.projectPoints(sword_left, rvec, tvec, cameraMatrix, distCoeffs)
-                    sword_points_left = np.int32(sword_points_left).reshape(-1, 2)
-                    cv2.fillPoly(frame, [sword_points_left], color=colors[0])
+            sword_points_left, _ = cv2.projectPoints(sword_left, rvec, tvec, cameraMatrix, distCoeffs)
+            sword_points_left = np.int32(sword_points_left).reshape(-1, 2)
+            cv2.fillPoly(frame, [sword_points_left], color=colors[0])
 
-                    sword_points_right, _ = cv2.projectPoints(sword_right, rvec, tvec, cameraMatrix, distCoeffs)
-                    sword_points_right = np.int32(sword_points_right).reshape(-1, 2)
-                    cv2.fillPoly(frame, [sword_points_right], color=colors[0])
-
-                else:
-                    ## ToDo: Handle top marker
-                    continue
+            sword_points_right, _ = cv2.projectPoints(sword_right, rvec, tvec, cameraMatrix, distCoeffs)
+            sword_points_right = np.int32(sword_points_right).reshape(-1, 2)
+            cv2.fillPoly(frame, [sword_points_right], color=colors[0])
 
     aruco.drawDetectedMarkers(frame, corners)
 
