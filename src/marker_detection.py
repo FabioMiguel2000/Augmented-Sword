@@ -234,6 +234,8 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
 
     detected_marker_corners = []
 
+    rotation_count=0
+    best_result = 0
     for group in group_of_corners:
         selected_corners = group[0]
 
@@ -257,19 +259,26 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         normalized_square_gray = cv2.cvtColor(normalized_square, cv2.COLOR_BGR2GRAY)
         normalized_square_gray = cv2.flip(normalized_square_gray, 1)
         _, normalized_square_gray = cv2.threshold(normalized_square_gray, 128, 255, cv2.THRESH_BINARY)
+        normalized_square_gray = cv2.transpose(normalized_square_gray)
+        normalized_square_gray = cv2.flip(normalized_square_gray, flipCode=0)
         # Compare the detected marker with the original marker image in the 4 possible rotations
         for i in range(4):
+            if i == 0:
+                cv2.imshow("The detected marker = ",  normalized_square_gray)
+                
+            # Use Template Matching to compare the detected marker with the marker image
+            result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
+            
+            if result > 0.95 and result > best_result:
+                rotation_count = i
+                detected_marker_corners = selected_corners
+                detected_marker = normalized_square_gray
+                best_result = result
+
             # Rotate 90 degrees counterclockwise
             normalized_square_gray = cv2.transpose(normalized_square_gray)
             normalized_square_gray = cv2.flip(normalized_square_gray, flipCode=0)
 
-            # Use Template Matching to compare the detected marker with the marker image
-            result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
-            
-            if result > 0.95:
-                detected_marker_corners = selected_corners
-                detected_marker = normalized_square_gray
-                break
     
     if len(detected_marker_corners) == 0:
         return frame
@@ -297,6 +306,15 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     rvecs, tvecs  = estimate_pose_single_marker(detected_marker_corners, 14, cameraMatrix, distCoeffs)
+
+
+
+    # rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
+    #                         [np.sin(rotation_angle), np.cos(rotation_angle), 0],
+    #                         [0, 0, 1]])
+    # Create the 3x3 rotation matrix for the Y-axis
+
+
 
     axis_points_3D = np.array([
         [0, 0, 0],                     # Origin
@@ -330,15 +348,103 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         [0, height, -depth]   # Top back left
     ], dtype=np.float32)
 
-    x_translation = (14-width)/2  # Adjust the value as needed
-    y_translation = 14-height  # Adjust the value as needed
-    z_translation = depth/2  # Adjust the value as needed
 
 
-    for i in range(len(cuboid_3d)):
-        cuboid_3d[i][0] += x_translation
-        cuboid_3d[i][1] += y_translation
-        cuboid_3d[i][2] += z_translation
+    # angle_in_degrees = 90*rotation_count
+    # rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+    # rotation_matrix = np.array([[np.cos(rotation_angle), 0, np.sin(rotation_angle)],
+    #                         [0, 1, 0],
+    #                         [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]])
+    
+    # for i in range(len(cuboid_3d)):
+    #     axis_points_3D[i] = np.dot(rotation_matrix, axis_points_3D[i])
+
+    # Define the rotation angle (in radians)
+    print("rotation value >>>>>>>>>>>", rotation_count)
+
+    # Create the translation matrix
+    # translation_matrix = np.array([[1, 0, 0, x_translation],
+    #                             [0, 1, 0, y_translation],
+    #                             [0, 0, 1, z_translation],
+    #                             [0, 0, 0, 1]])
+
+    # cuboid_3d = np.dot(translation_matrix, np.vstack((cuboid_3d.T, np.ones(cuboid_3d.shape[0]))))
+    # cuboid_3d = cuboid_3d[:3, :].T
+    if rotation_count == 0:
+        for i in range(len(cuboid_3d)):
+            x_translation = (14-width)/2  # Adjust the value as needed
+            y_translation = 14-height  # Adjust the value as needed
+            z_translation = depth/2  # Adjust the value as needed
+
+            cuboid_3d[i][0] += x_translation
+            cuboid_3d[i][1] += y_translation
+            cuboid_3d[i][2] += z_translation
+    elif rotation_count == 1: # for counterclockwise 90
+        angle_in_degrees = 270
+        rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+        # # Create the 3x3 rotation matrix for the Y-axis
+        # rotation_matrix = np.array([[np.cos(rotation_angle), 0, np.sin(rotation_angle)],
+        #                             [0, 1, 0],
+        #                             [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]])
+        # rotation_matrix = np.array([[1, 0, 0],
+        #                     [0, np.cos(rotation_angle), -np.sin(rotation_angle)],
+        #                     [0, np.sin(rotation_angle), np.cos(rotation_angle)]])
+        rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
+                            [np.sin(rotation_angle), np.cos(rotation_angle), 0],
+                            [0, 0, 1]])
+        
+        for i in range(len(cuboid_3d)):
+            cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
+
+            # x_translation = -depth/2   # Adjust the value as needed
+            y_translation = (14-width)/2 + width  # Adjust the value as needed
+            z_translation = depth/2  # Adjust the value as needed
+
+        for i in range(len(cuboid_3d)):
+            # cuboid_3d[i][0] += x_translation
+            cuboid_3d[i][1] += y_translation
+            cuboid_3d[i][2] += z_translation
+
+    elif rotation_count == 2: # for 180
+        x_translation = (14-width)/2  # Adjust the value as needed
+        z_translation = depth/2  # Adjust the value as needed
+
+        for i in range(len(cuboid_3d)):
+            cuboid_3d[i][0] += x_translation
+            # cuboid_3d[i][1] += y_translation
+            cuboid_3d[i][2] += z_translation
+            # cuboid_3d[i][2] += z_translation
+
+    else: # for clockwise 90
+        angle_in_degrees = 90
+        rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+        rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
+                    [np.sin(rotation_angle), np.cos(rotation_angle), 0],
+                    [0, 0, 1]])
+        
+        for i in range(len(cuboid_3d)):
+            cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
+
+        x_translation = 14   # Adjust the value as needed
+        y_translation = (14-width)/2   # Adjust the value as needed
+        z_translation = depth/2  # Adjust the value as needed
+
+        for i in range(len(cuboid_3d)):
+            cuboid_3d[i][0] += x_translation
+            cuboid_3d[i][1] += y_translation
+            cuboid_3d[i][2] += z_translation
+
+        
+        
+    
+    # Create the 3x3 rotation matrix for the Z-axis
+
+
+    # for i in range(len(cuboid_3d)):
+    #     cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
 
     # Solve PnP problem to estimate pose
     # tvecs, _ = cv2.Rodrigues(tvecs)
