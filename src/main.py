@@ -158,10 +158,13 @@ while True:
 
         # Compute distances to each marker
         distances = []
+        vecs = []
         for i in range(len(ids)):
             rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[i].reshape(corners[i].shape), 10, cameraMatrix, distCoeffs)
             distance = np.sqrt(tvec[0][0][2] ** 2 + tvec[0][0][0] ** 2 + tvec[0][0][1] ** 2)
             distances.append(distance)
+            vecs.append((rvec, tvec))
+
         print("Distances:       ", distances)
             
         # Find the closest marker
@@ -169,6 +172,8 @@ while True:
         id = ids.flatten()[id_index]
         print("ID used:         ", id)
 
+        # Get vecs of closest marker
+        rvec, tvec = vecs[id_index]
         if (id == 0):
             # Your rotation vector (rvec)
             rvec2 = np.array([np.pi/2, 0, 0])  # Rotate by 90 degrees (π/2) around the Z-axis
