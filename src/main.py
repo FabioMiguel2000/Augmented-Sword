@@ -29,7 +29,7 @@ cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.zeros((5, 1))
 
 # Cube size in centimeters
-cube_size = 7.0
+cube_size = 7
 
 # Define the 3D coordinates of the center of the markers on the cube based on the cube size
 marker_coordinates_3d = [
@@ -47,132 +47,100 @@ colors = [(0, 0, 255),  # Red
           (255, 255, 0),  # Yellow
           (0, 255, 255)]  # Cyan
 
-
-# Old Sword
-sword_3d_1 = np.array([
-    [0.0, 0.0, 0.0],
-    [20.0, 0.0, 0.0],
-    [20.0, 1.0, 0.0],
-    [0.0, 1.0, 0.0],
-    [0.0, 0.0, -1.0],
-    [20.0, 0.0, -1.0],
-    [20.0, 1.0, -1.0],
-    [0.0, 1.0, -1.0],
-    [8.0, 0.0, 0.0],   # Handle - Top
-    [12.0, 0.0, 0.0],  # Handle - Top
-    [10.0, 0.0, 0.0],  # Handle - Middle (Center)
-    [10.0, 0.0, -4.0],  # Handle - Bottom
-], dtype=np.float32)
-
-# # Sword Blades --------------------------------------
-# blade_front = np.array([
-#     [-8, -8, 1],
-#     [8, -8, 1],
-#     [0, 90, -3.5],
-# ], dtype=np.float32)
-# blade_back = np.array([
-#     [-8,-8,-18],
-#     [8,-8,-18],
-#     [0, 90, -3.5],
-# ], dtype=np.float32)
-# blade_left = np.array([
-#     [-8, -8, -18],
-#     [-8, -8, 1],
-#     [0, 90, -3.5],
-# ], dtype=np.float32)
-# blade_right = np.array([
-#     [8, -8, -18],
-#     [8, -8, 1],
-#     [0, 90, -3.5],
-# ], dtype=np.float32)
+# Array of set of coordinates
+blade = []
+handle = []
 
 # Sword Blades --------------------------------------
-blade_front = np.array([
+
+# Sword Blades --------------------------------------
+blade.append(
+    np.array([
     [-cube_size, -cube_size / 2, cube_size/2],
     [cube_size, -cube_size / 2, cube_size/2],
     [0, cube_size*4, -cube_size/2]
-], dtype=np.float32)
-blade_back = np.array([
+], dtype=np.float32))
+blade.append(
+    np.array([
     [-cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [0, cube_size*4, -cube_size/2]
-], dtype=np.float32)
-blade_left = np.array([
+], dtype=np.float32))
+blade.append(
+    np.array([
     [-cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [-cube_size, -cube_size / 2, cube_size/2],
     [0, cube_size*4, -cube_size/2]
-], dtype=np.float32)
-blade_right = np.array([
+], dtype=np.float32))
+blade.append(
+    np.array([
     [cube_size, -cube_size / 2, cube_size/2],
     [cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [0, cube_size*4, -cube_size/2]
-], dtype=np.float32)
+], dtype=np.float32))
 
 # Sword Handle --------------------------------------
-lower_handle_top = np.array([
+handle.append(
+    np.array([
     # Top Face
     [-cube_size/4, -cube_size*2, -cube_size/4],
     [cube_size/4, -cube_size*2, -cube_size/4],
     [cube_size/4, -cube_size*2, -3*cube_size/4],
     [-cube_size/4, -cube_size*2, -3*cube_size/4],
-], dtype=np.float32)
-lower_handle_bottom = np.array([
+], dtype=np.float32))
+handle.append(
+    np.array([
     # Bottom Face
     [-cube_size/4, -5*cube_size/2, -cube_size/4],
     [cube_size/4, -5*cube_size/2, -cube_size/4],
     [cube_size/4, -5*cube_size/2, -3*cube_size/4],
     [-cube_size/4, -5*cube_size/2, -3*cube_size/4],
-], dtype=np.float32)
-lower_handle_left = np.array([
+], dtype=np.float32))
+handle.append(
+    np.array([
     # Left Face
     [-cube_size/4, -cube_size*2, -3*cube_size/4],
     [-cube_size/4, -5*cube_size/2, -3*cube_size/4],
     [-cube_size/4, -5*cube_size/2, -cube_size/4],
     [-cube_size/4, -cube_size*2, -cube_size/4],
-], dtype=np.float32)
-lower_handle_right = np.array([
+], dtype=np.float32))
+handle.append(
+    np.array([
     # Right Face
     [cube_size/4, -cube_size*2, -cube_size/4],
     [cube_size/4, -5*cube_size/2, -cube_size/4],
     [cube_size/4, -5*cube_size/2, -3*cube_size/4],
     [cube_size/4, -cube_size*2, -3*cube_size/4],
-], dtype=np.float32)
-lower_handle_front = np.array([
+], dtype=np.float32))
+handle.append(
+    np.array([
     # Front Face
     [-cube_size/4, -cube_size*2, -cube_size/4],
     [-cube_size/4, -5*cube_size/2, -cube_size/4],
     [cube_size/4, -5*cube_size/2, -cube_size/4],
     [cube_size/4, -cube_size*2, -cube_size/4],
-], dtype=np.float32)
-lower_handle_back = np.array([
+], dtype=np.float32))
+handle.append(
+    np.array([
     # Back Face
     [-cube_size/4, -cube_size*2, -3*cube_size/4],
     [-cube_size/4, -5*cube_size/2, -3*cube_size/4],
     [cube_size/4, -5*cube_size/2, -3*cube_size/4],
     [cube_size/4, -cube_size*2, -3*cube_size/4],
-], dtype=np.float32)
-
+], dtype=np.float32))
+top_marker_translation = [0, -cube_size/2, -cube_size]
 #lower_handle = np.vstack((lower_handle_top, lower_handle_bottom, lower_handle_left, lower_handle_right, lower_handle_front, lower_handle_back))
 
 
 
 scale_factor = 1.3
-#sword = np.vstack((blade_1, blade_2)) * scale_factor
+# Scale the shapes
+for i in range(len(handle)):
+    handle[i] *= scale_factor
 
-sword_front = blade_front * scale_factor
-sword_back = blade_back * scale_factor
-sword_left = blade_left * scale_factor
-sword_right = blade_right * scale_factor
+for i in range(len(blade)):
+    blade[i] *= scale_factor
 
-lower_handle_top = lower_handle_top * scale_factor
-lower_handle_bottom = lower_handle_bottom * scale_factor
-lower_handle_left = lower_handle_left * scale_factor
-lower_handle_right = lower_handle_right * scale_factor
-lower_handle_front = lower_handle_front * scale_factor
-lower_handle_back = lower_handle_back * scale_factor
-
-
-#sword_lower_handle = lower_handle * scale_factor
 
 while True:
     ret, frame = cap.read()
@@ -201,47 +169,46 @@ while True:
         id = ids.flatten()[id_index]
         print("ID used:         ", id)
 
-        # Draw the filled shape of the sword with the assigned color
-        sword_points_back, _ = cv2.projectPoints(sword_back, rvec, tvec, cameraMatrix, distCoeffs)
-        sword_points_back = np.int32(sword_points_back).reshape(-1, 2)
-        cv2.fillPoly(frame, [sword_points_back], color=colors[1])
 
-        sword_points_front, _ = cv2.projectPoints(sword_front, rvec, tvec, cameraMatrix, distCoeffs)
-        sword_points_front = np.int32(sword_points_front).reshape(-1, 2)
-        cv2.fillPoly(frame, [sword_points_front], color=colors[1])
+        if (id == 0):
+            # Your rotation vector (rvec)
+            rvec2 = np.array([np.pi/2, 0, 0])  # Rotate by 90 degrees (π/2) around the Z-axis
+            # Convert the rotation vector to a rotation matrix
+            rotation_matrix, _ = cv2.Rodrigues(rvec2)
 
-        sword_points_left, _ = cv2.projectPoints(sword_left, rvec, tvec, cameraMatrix, distCoeffs)
-        sword_points_left = np.int32(sword_points_left).reshape(-1, 2)
-        cv2.fillPoly(frame, [sword_points_left], color=colors[1])
+            # Draw the filled shape of the sword with the assigned color
+            for shape in handle:
+                # Your set of 3D coordinates (replace with your actual coordinates)
+                coordinates = shape
+                # Apply the rotation to the coordinates
+                rotated_coordinates = np.dot(coordinates, rotation_matrix.T)
+                shape = rotated_coordinates + top_marker_translation
 
-        sword_points_right, _ = cv2.projectPoints(sword_right, rvec, tvec, cameraMatrix, distCoeffs)
-        sword_points_right = np.int32(sword_points_right).reshape(-1, 2)
-        cv2.fillPoly(frame, [sword_points_right], color=colors[1])
+                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
+                draw_shape = np.int32(draw_shape).reshape(-1, 2)
+                cv2.fillPoly(frame, [draw_shape], color=colors[0])
+            for shape in blade:
+                # Your set of 3D coordinates (replace with your actual coordinates)
+                coordinates = shape
+                # Apply the rotation to the coordinates
+                rotated_coordinates = np.dot(coordinates, rotation_matrix.T)
+                shape = rotated_coordinates + top_marker_translation
 
-        # Draw the filled shape of the lower handle with the assigned color
-        lower_handle_points_top, _ = cv2.projectPoints(lower_handle_top, rvec, tvec, cameraMatrix, distCoeffs)
-        lower_handle_points_top = np.int32(lower_handle_points_top).reshape(-1, 2)
-        cv2.fillPoly(frame, [lower_handle_points_top], color=colors[2])
+                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
+                draw_shape = np.int32(draw_shape).reshape(-1, 2)
+                cv2.fillPoly(frame, [draw_shape], color=colors[1])
 
-        lower_handle_points_bottom, _ = cv2.projectPoints(lower_handle_bottom, rvec, tvec, cameraMatrix, distCoeffs)
-        lower_handle_points_bottom = np.int32(lower_handle_points_bottom).reshape(-1, 2)
-        cv2.fillPoly(frame, [lower_handle_points_bottom], color=colors[2])
+        else:
+            # Draw the filled shape of the sword with the assigned color
+            for shape in handle:
+                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
+                draw_shape = np.int32(draw_shape).reshape(-1, 2)
+                cv2.fillPoly(frame, [draw_shape], color=colors[0])
+            for shape in blade:
+                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
+                draw_shape = np.int32(draw_shape).reshape(-1, 2)
+                cv2.fillPoly(frame, [draw_shape], color=colors[1])
 
-        lower_handle_points_left, _ = cv2.projectPoints(lower_handle_left, rvec, tvec, cameraMatrix, distCoeffs)
-        lower_handle_points_left = np.int32(lower_handle_points_left).reshape(-1, 2)
-        cv2.fillPoly(frame, [lower_handle_points_left], color=colors[2])
-
-        lower_handle_points_right, _ = cv2.projectPoints(lower_handle_right, rvec, tvec, cameraMatrix, distCoeffs)
-        lower_handle_points_right = np.int32(lower_handle_points_right).reshape(-1, 2)
-        cv2.fillPoly(frame, [lower_handle_points_right], color=colors[2])
-
-        lower_handle_points_front, _ = cv2.projectPoints(lower_handle_front, rvec, tvec, cameraMatrix, distCoeffs)
-        lower_handle_points_front = np.int32(lower_handle_points_front).reshape(-1, 2)
-        cv2.fillPoly(frame, [lower_handle_points_front], color=colors[2])
-
-        lower_handle_points_back, _ = cv2.projectPoints(lower_handle_back, rvec, tvec, cameraMatrix, distCoeffs)
-        lower_handle_points_back = np.int32(lower_handle_points_back).reshape(-1, 2)
-        cv2.fillPoly(frame, [lower_handle_points_back], color=colors[2])
 
     aruco.drawDetectedMarkers(frame, corners)
 
