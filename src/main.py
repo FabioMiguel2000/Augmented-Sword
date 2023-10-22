@@ -120,7 +120,9 @@ while True:
 
     if ids is not None:
         if (ids[0] != 0):
-            print("ID being used: ", ids[0])
+            print("\n-------------------")
+            print("IDs detected:    ", len(ids), "/ 3")
+            print("ID used:         ", ids[0][0])
             rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners[0], 10, cameraMatrix, distCoeffs)
             marker_id = int(ids[0][0])  # Convert to integer
 
