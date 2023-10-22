@@ -24,10 +24,6 @@ pip install -r ../requirements.txt
 ```
 
 ## Usage
-After running the program, the default webcam will be used to capture the image. The image will be processed and the result will be displayed in a new window.
-In order to display the AR virtual sword, the user simply needs to hold a cube, with the following faces:
-- **ToDO: Insert faces here and maybe images of them**
-- **Right now it detects `4x4` markers generated in `https://chev.me/arucogen/`**
 
 ### How to run
 1. Make sure the `augmented_sword` environment is activated and you're under the `src/` directory:
@@ -55,6 +51,16 @@ In order to display the AR virtual sword, the user simply needs to hold a cube, 
 conda remove -n ENV_NAME --all
 ```
 2. Delete the local repository.
+
+## Virtual Sword Display Modes
+After running the program, the device's default webcam will be used to capture the image. The image will be processed and the result will be displayed in a new window.
+The user can then display a virtual sword using one of two methods:
+
+### Simple Mode - Flat Cardboard Cutout (2 Artoolkit Markers)
+- [!] ToDo: Insert Instructions here on how to print the cardboard cutout, and which markers and their IDs to put on each cube face.
+
+### Advanced Mode - Handheld Cube (5 ArUco Markers)
+- [!] ToDo: Insert Instructions here on how to print the cube, and which markers and their IDs to put on each cube face.
 
 
 ## Group Members
