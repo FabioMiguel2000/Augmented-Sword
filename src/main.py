@@ -172,12 +172,13 @@ while True:
             draw_shape = np.int32(draw_shape).reshape(-1, 2)
             cv2.fillPoly(frame, [draw_shape], color=colors[1])
 
-        for shape in handle:
-            draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
-            draw_shape = np.int32(draw_shape).reshape(-1, 2)
-            cv2.fillPoly(frame, [draw_shape], color=colors[0])
+        if id != 0:
+            for shape in handle:
+                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
+                draw_shape = np.int32(draw_shape).reshape(-1, 2)
+                cv2.fillPoly(frame, [draw_shape], color=colors[0])
 
-    aruco.drawDetectedMarkers(frame, corners)
+    #aruco.drawDetectedMarkers(frame, corners)
 
     cv2.imshow("Webcam Feed", frame)
 
