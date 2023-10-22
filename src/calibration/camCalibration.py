@@ -66,7 +66,9 @@ f.write("fx="+ str(mtx[0][0]) +
       "\nk2="+ str(dist[0][1]) +
       "\np1="+ str(dist[0][2]) +
       "\np2="+ str(dist[0][3]) +
-      "\nk3="+ str(dist[0][4])     
+      "\nk3="+ str(dist[0][4]) +
+      "\nmtx=" + str(mtx) +
+      "\ndist=" + str(dist)     
       )
 f.close()
 
