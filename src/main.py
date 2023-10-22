@@ -29,7 +29,7 @@ cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.zeros((5, 1))
 
 # Cube size in centimeters
-cube_size = 7
+cube_size = 13
 
 # Define the 3D coordinates of the center of the markers on the cube based on the cube size
 marker_coordinates_3d = [
@@ -168,7 +168,6 @@ while True:
         id_index = np.argmin(distances)
         id = ids.flatten()[id_index]
         print("ID used:         ", id)
-
 
         if (id == 0):
             # Your rotation vector (rvec)
