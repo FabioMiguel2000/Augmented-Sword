@@ -29,7 +29,7 @@ cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.zeros((5, 1))
 
 # Cube size in centimeters
-cube_size = 7.0
+cube_size = 13.0
 
 # Define the 3D coordinates of the center of the markers on the cube based on the cube size
 marker_coordinates_3d = [
@@ -90,22 +90,22 @@ sword_3d_1 = np.array([
 blade_front = np.array([
     [-cube_size, -cube_size / 2, cube_size/2],
     [cube_size, -cube_size / 2, cube_size/2],
-    [0, cube_size*3, -cube_size/2]
+    [0, cube_size*4, -cube_size/2]
 ], dtype=np.float32)
 blade_back = np.array([
     [-cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
-    [0, cube_size*3, -cube_size/2]
+    [0, cube_size*4, -cube_size/2]
 ], dtype=np.float32)
 blade_left = np.array([
     [-cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
     [-cube_size, -cube_size / 2, cube_size/2],
-    [0, cube_size*3, -cube_size/2]
+    [0, cube_size*4, -cube_size/2]
 ], dtype=np.float32)
 blade_right = np.array([
     [cube_size, -cube_size / 2, cube_size/2],
     [cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
-    [0, cube_size*3, -cube_size/2]
+    [0, cube_size*4, -cube_size/2]
 ], dtype=np.float32)
 
 # Sword Handle --------------------------------------
@@ -185,71 +185,72 @@ while True:
     corners, ids, _ = aruco.detectMarkers(gray, aruco_dict)
 
     if ids is not None:
+        # ToDo: Make sure to use the best marker (distance to camera?)
         if (ids[0] != 0):
             print("\n-------------------")
             print("IDs detected:    ", len(ids), "/ 3")
             marker_chosen = False
-            for id in ids[0]:
-                roll_value = 0
-                if (marker_chosen):
-                    break
-                elif (id == 2):
-                    roll_value = 4 # Rotate PI
-                elif (id == 3):
-                    roll_value = 2 # Rotate PI/2
-                
-                # A marker has has been chosen
-                print("ID used:         ", id)
-                marker_chosen = True
+            print("ALl IDS: ", ids[0])
+            roll_value = 0
 
-                # Roll corners[0]
-                rolled_corners = np.roll(corners[0][0], roll_value)
+            # A marker has has been chosen
+            print("ID used:         ", ids[0])
+            marker_chosen = False
+            if (marker_chosen):
+                break
+            elif (id == 2):
+                roll_value = 4  # Rotate PI
+            elif (id == 3):
+                roll_value = 2  # Rotate PI/2
 
-                # Get the 3D coordinates of the marker
-                rvec, tvec, _ = aruco.estimatePoseSingleMarkers(rolled_corners.reshape(corners[0].shape), 10, cameraMatrix, distCoeffs)
-                marker_id = int(ids[0][0])  # Convert to integer
+            # Roll corners[0]
+            rolled_corners = np.roll(corners[0][0], roll_value)
 
-                # Draw the filled shape of the sword with the assigned color
-                sword_points_back, _ = cv2.projectPoints(sword_back, rvec, tvec, cameraMatrix, distCoeffs)
-                sword_points_back = np.int32(sword_points_back).reshape(-1, 2)
-                cv2.fillPoly(frame, [sword_points_back], color=colors[1])
+            # Get the 3D coordinates of the marker
+            rvec, tvec, _ = aruco.estimatePoseSingleMarkers(rolled_corners.reshape(corners[0].shape), 10, cameraMatrix, distCoeffs)
+            marker_id = int(ids[0][0])  # Convert to integer
 
-                sword_points_front, _ = cv2.projectPoints(sword_front, rvec, tvec, cameraMatrix, distCoeffs)
-                sword_points_front = np.int32(sword_points_front).reshape(-1, 2)
-                cv2.fillPoly(frame, [sword_points_front], color=colors[1])
+            # Draw the filled shape of the sword with the assigned color
+            sword_points_back, _ = cv2.projectPoints(sword_back, rvec, tvec, cameraMatrix, distCoeffs)
+            sword_points_back = np.int32(sword_points_back).reshape(-1, 2)
+            cv2.fillPoly(frame, [sword_points_back], color=colors[1])
 
-                sword_points_left, _ = cv2.projectPoints(sword_left, rvec, tvec, cameraMatrix, distCoeffs)
-                sword_points_left = np.int32(sword_points_left).reshape(-1, 2)
-                cv2.fillPoly(frame, [sword_points_left], color=colors[1])
+            sword_points_front, _ = cv2.projectPoints(sword_front, rvec, tvec, cameraMatrix, distCoeffs)
+            sword_points_front = np.int32(sword_points_front).reshape(-1, 2)
+            cv2.fillPoly(frame, [sword_points_front], color=colors[1])
 
-                sword_points_right, _ = cv2.projectPoints(sword_right, rvec, tvec, cameraMatrix, distCoeffs)
-                sword_points_right = np.int32(sword_points_right).reshape(-1, 2)
-                cv2.fillPoly(frame, [sword_points_right], color=colors[1])
+            sword_points_left, _ = cv2.projectPoints(sword_left, rvec, tvec, cameraMatrix, distCoeffs)
+            sword_points_left = np.int32(sword_points_left).reshape(-1, 2)
+            cv2.fillPoly(frame, [sword_points_left], color=colors[1])
 
-                # # Draw the filled shape of the lower handle with the assigned color
-                # lower_handle_points_top, _ = cv2.projectPoints(lower_handle_top, rvec, tvec, cameraMatrix, distCoeffs)
-                # lower_handle_points_top = np.int32(lower_handle_points_top).reshape(-1, 2)
-                # cv2.fillPoly(frame, [lower_handle_points_top], color=colors[2])
+            sword_points_right, _ = cv2.projectPoints(sword_right, rvec, tvec, cameraMatrix, distCoeffs)
+            sword_points_right = np.int32(sword_points_right).reshape(-1, 2)
+            cv2.fillPoly(frame, [sword_points_right], color=colors[1])
 
-                # lower_handle_points_bottom, _ = cv2.projectPoints(lower_handle_bottom, rvec, tvec, cameraMatrix, distCoeffs)
-                # lower_handle_points_bottom = np.int32(lower_handle_points_bottom).reshape(-1, 2)
-                # cv2.fillPoly(frame, [lower_handle_points_bottom], color=colors[2])
+            # # Draw the filled shape of the lower handle with the assigned color
+            # lower_handle_points_top, _ = cv2.projectPoints(lower_handle_top, rvec, tvec, cameraMatrix, distCoeffs)
+            # lower_handle_points_top = np.int32(lower_handle_points_top).reshape(-1, 2)
+            # cv2.fillPoly(frame, [lower_handle_points_top], color=colors[2])
 
-                # lower_handle_points_left, _ = cv2.projectPoints(lower_handle_left, rvec, tvec, cameraMatrix, distCoeffs)
-                # lower_handle_points_left = np.int32(lower_handle_points_left).reshape(-1, 2)
-                # cv2.fillPoly(frame, [lower_handle_points_left], color=colors[2])
+            # lower_handle_points_bottom, _ = cv2.projectPoints(lower_handle_bottom, rvec, tvec, cameraMatrix, distCoeffs)
+            # lower_handle_points_bottom = np.int32(lower_handle_points_bottom).reshape(-1, 2)
+            # cv2.fillPoly(frame, [lower_handle_points_bottom], color=colors[2])
 
-                # lower_handle_points_right, _ = cv2.projectPoints(lower_handle_right, rvec, tvec, cameraMatrix, distCoeffs)
-                # lower_handle_points_right = np.int32(lower_handle_points_right).reshape(-1, 2)
-                # cv2.fillPoly(frame, [lower_handle_points_right], color=colors[2])
+            # lower_handle_points_left, _ = cv2.projectPoints(lower_handle_left, rvec, tvec, cameraMatrix, distCoeffs)
+            # lower_handle_points_left = np.int32(lower_handle_points_left).reshape(-1, 2)
+            # cv2.fillPoly(frame, [lower_handle_points_left], color=colors[2])
 
-                # lower_handle_points_front, _ = cv2.projectPoints(lower_handle_front, rvec, tvec, cameraMatrix, distCoeffs)
-                # lower_handle_points_front = np.int32(lower_handle_points_front).reshape(-1, 2)
-                # cv2.fillPoly(frame, [lower_handle_points_front], color=colors[2])
+            # lower_handle_points_right, _ = cv2.projectPoints(lower_handle_right, rvec, tvec, cameraMatrix, distCoeffs)
+            # lower_handle_points_right = np.int32(lower_handle_points_right).reshape(-1, 2)
+            # cv2.fillPoly(frame, [lower_handle_points_right], color=colors[2])
 
-                # lower_handle_points_back, _ = cv2.projectPoints(lower_handle_back, rvec, tvec, cameraMatrix, distCoeffs)
-                # lower_handle_points_back = np.int32(lower_handle_points_back).reshape(-1, 2)
-                # cv2.fillPoly(frame, [lower_handle_points_back], color=colors[2])
+            # lower_handle_points_front, _ = cv2.projectPoints(lower_handle_front, rvec, tvec, cameraMatrix, distCoeffs)
+            # lower_handle_points_front = np.int32(lower_handle_points_front).reshape(-1, 2)
+            # cv2.fillPoly(frame, [lower_handle_points_front], color=colors[2])
+
+            # lower_handle_points_back, _ = cv2.projectPoints(lower_handle_back, rvec, tvec, cameraMatrix, distCoeffs)
+            # lower_handle_points_back = np.int32(lower_handle_points_back).reshape(-1, 2)
+            # cv2.fillPoly(frame, [lower_handle_points_back], color=colors[2])
 
     aruco.drawDetectedMarkers(frame, corners)
 
