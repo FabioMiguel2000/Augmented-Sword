@@ -29,9 +29,9 @@ cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.zeros((5, 1))
 
 # Marker size in centimeters
-cube_size = 13
+marker_size = 7
 # Scale factor
-scale_factor = 1
+scale_factor = 1.5
 
 # Define colors for each side
 colors = [(0, 0, 255),  # Red
@@ -47,79 +47,79 @@ handle = []
 # Sword Blades --------------------------------------
 blade.append(
     np.array([
-    [-cube_size, -cube_size / 2, cube_size/2],
-    [cube_size, -cube_size / 2, cube_size/2],
-    [0, cube_size*4, -cube_size/2]
+    [-marker_size, -marker_size / 2, marker_size/2],
+    [marker_size, -marker_size / 2, marker_size/2],
+    [0, marker_size*4, -marker_size/2]
 ], dtype=np.float32))
 blade.append(
     np.array([
-    [-cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
-    [cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
-    [0, cube_size*4, -cube_size/2]
+    [-marker_size, -marker_size / 2, -(marker_size + marker_size/2)],
+    [marker_size, -marker_size / 2, -(marker_size + marker_size/2)],
+    [0, marker_size*4, -marker_size/2]
 ], dtype=np.float32))
 blade.append(
     np.array([
-    [-cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
-    [-cube_size, -cube_size / 2, cube_size/2],
-    [0, cube_size*4, -cube_size/2]
+    [-marker_size, -marker_size / 2, -(marker_size + marker_size/2)],
+    [-marker_size, -marker_size / 2, marker_size/2],
+    [0, marker_size*4, -marker_size/2]
 ], dtype=np.float32))
 blade.append(
     np.array([
-    [cube_size, -cube_size / 2, cube_size/2],
-    [cube_size, -cube_size / 2, -(cube_size + cube_size/2)],
-    [0, cube_size*4, -cube_size/2]
+    [marker_size, -marker_size / 2, marker_size/2],
+    [marker_size, -marker_size / 2, -(marker_size + marker_size/2)],
+    [0, marker_size*4, -marker_size/2]
 ], dtype=np.float32))
 
 # Sword Handle --------------------------------------
 handle.append(
     np.array([
     # Top Face
-    [-cube_size/4, -cube_size*2, -cube_size/4],
-    [cube_size/4, -cube_size*2, -cube_size/4],
-    [cube_size/4, -cube_size*2, -3*cube_size/4],
-    [-cube_size/4, -cube_size*2, -3*cube_size/4],
+    [-marker_size/4, -marker_size*2, -marker_size/4],
+    [marker_size/4, -marker_size*2, -marker_size/4],
+    [marker_size/4, -marker_size*2, -3*marker_size/4],
+    [-marker_size/4, -marker_size*2, -3*marker_size/4],
 ], dtype=np.float32))
 handle.append(
     np.array([
     # Bottom Face
-    [-cube_size/4, -5*cube_size/2, -cube_size/4],
-    [cube_size/4, -5*cube_size/2, -cube_size/4],
-    [cube_size/4, -5*cube_size/2, -3*cube_size/4],
-    [-cube_size/4, -5*cube_size/2, -3*cube_size/4],
+    [-marker_size/4, -5*marker_size/2, -marker_size/4],
+    [marker_size/4, -5*marker_size/2, -marker_size/4],
+    [marker_size/4, -5*marker_size/2, -3*marker_size/4],
+    [-marker_size/4, -5*marker_size/2, -3*marker_size/4],
 ], dtype=np.float32))
 handle.append(
     np.array([
     # Left Face
-    [-cube_size/4, -cube_size*2, -3*cube_size/4],
-    [-cube_size/4, -5*cube_size/2, -3*cube_size/4],
-    [-cube_size/4, -5*cube_size/2, -cube_size/4],
-    [-cube_size/4, -cube_size*2, -cube_size/4],
+    [-marker_size/4, -marker_size*2, -3*marker_size/4],
+    [-marker_size/4, -5*marker_size/2, -3*marker_size/4],
+    [-marker_size/4, -5*marker_size/2, -marker_size/4],
+    [-marker_size/4, -marker_size*2, -marker_size/4],
 ], dtype=np.float32))
 handle.append(
     np.array([
     # Right Face
-    [cube_size/4, -cube_size*2, -cube_size/4],
-    [cube_size/4, -5*cube_size/2, -cube_size/4],
-    [cube_size/4, -5*cube_size/2, -3*cube_size/4],
-    [cube_size/4, -cube_size*2, -3*cube_size/4],
+    [marker_size/4, -marker_size*2, -marker_size/4],
+    [marker_size/4, -5*marker_size/2, -marker_size/4],
+    [marker_size/4, -5*marker_size/2, -3*marker_size/4],
+    [marker_size/4, -marker_size*2, -3*marker_size/4],
 ], dtype=np.float32))
 handle.append(
     np.array([
     # Front Face
-    [-cube_size/4, -cube_size*2, -cube_size/4],
-    [-cube_size/4, -5*cube_size/2, -cube_size/4],
-    [cube_size/4, -5*cube_size/2, -cube_size/4],
-    [cube_size/4, -cube_size*2, -cube_size/4],
+    [-marker_size/4, -marker_size*2, -marker_size/4],
+    [-marker_size/4, -5*marker_size/2, -marker_size/4],
+    [marker_size/4, -5*marker_size/2, -marker_size/4],
+    [marker_size/4, -marker_size*2, -marker_size/4],
 ], dtype=np.float32))
 handle.append(
     np.array([
     # Back Face
-    [-cube_size/4, -cube_size*2, -3*cube_size/4],
-    [-cube_size/4, -5*cube_size/2, -3*cube_size/4],
-    [cube_size/4, -5*cube_size/2, -3*cube_size/4],
-    [cube_size/4, -cube_size*2, -3*cube_size/4],
+    [-marker_size/4, -marker_size*2, -3*marker_size/4],
+    [-marker_size/4, -5*marker_size/2, -3*marker_size/4],
+    [marker_size/4, -5*marker_size/2, -3*marker_size/4],
+    [marker_size/4, -marker_size*2, -3*marker_size/4],
 ], dtype=np.float32))
-top_marker_translation = [0, -cube_size/2, -cube_size]
+top_marker_translation = [0, -marker_size/2, -marker_size]
 
 # Scale the shapes
 for i in range(len(handle)):
