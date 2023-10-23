@@ -172,10 +172,6 @@ def estimate_pose_single_marker(corners, marker_size, mtx, distortion):
     distortion - is the camera distortion matrix
     RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
     '''
-    # marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
-    #                           [marker_size / 2, marker_size / 2, 0],
-    #                           [marker_size / 2, -marker_size / 2, 0],
-    #                           [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
     
     marker_points = np.array([[0, 0, 0],
                             [marker_size, 0, 0],
@@ -190,6 +186,143 @@ def estimate_pose_single_marker(corners, marker_size, mtx, distortion):
     tvecs = np.array(t, dtype=np.float32)
 
     return rvecs, tvecs
+
+def render_cuboid(frame ,cuboid_object, rvecs, tvecs, cameraMatrix, distCoeffs):
+    points, _ = cv2.projectPoints(cuboid_object, rvecs, tvecs, cameraMatrix, distCoeffs)
+
+    for i in range(4):
+        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (0, 255, 0), 2)
+        next_index = (i + 1) if i < 3 else 0  # Wrap around to connect the last point to the first
+        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[next_index][0][0]), int(points[next_index][0][1])), (0, 255, 0), 2)
+        cv2.line(frame, (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (int(points[next_index + 4][0][0]), int(points[next_index + 4][0][1])), (0, 255, 0), 2)
+
+
+def create_cuboid_object(height, width, depth):
+    return np.array([
+        [0, 0, 0],         # Bottom center
+        [width, 0, 0],     # Bottom front right
+        [width, 0, -depth],  # Bottom back right
+        [0, 0, -depth],    # Bottom back left
+        [0, height, 0],    # Top center
+        [width, height, 0],  # Top front right
+        [width, height, -depth],  # Top back right
+        [0, height, -depth]   # Top back left
+    ], dtype=np.float32)
+
+def translate_x(object_matrix, value):
+    '''
+        x-axis translation
+    '''
+    for i in range(len(object_matrix)):
+        object_matrix[i][0] += value 
+    
+    return object_matrix
+
+def translate_y(object_matrix, value):
+    '''
+        y-axis translation
+    '''
+    for i in range(len(object_matrix)):
+        object_matrix[i][1] += value # x axis translation
+    
+    return object_matrix
+
+def translate_z(object_matrix, value):
+    '''
+        z-axis translation
+    '''
+    for i in range(len(object_matrix)):
+        object_matrix[i][2] += value # x axis translation
+    
+    return object_matrix
+
+def rotate_x(object_matrix, value_in_degrees):
+    rotation_angle = (value_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+    # Create the 3x3 rotation matrix for the X-axis
+    rotation_matrix = np.array([[1, 0, 0],
+                                [0, np.cos(rotation_angle), -np.sin(rotation_angle)],
+                                [0, np.sin(rotation_angle), np.cos(rotation_angle)]])
+
+    for i in range(len(object_matrix)):
+        object_matrix[i] = np.dot(rotation_matrix, object_matrix[i])
+
+def rotate_y(object_matrix, value_in_degrees):
+    rotation_angle = (value_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+    # Create the 3x3 rotation matrix for the Y-axis
+    rotation_matrix = np.array([[np.cos(rotation_angle), 0, np.sin(rotation_angle)],
+                                [0, 1, 0],
+                                [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]])
+
+    for i in range(len(object_matrix)):
+        object_matrix[i] = np.dot(rotation_matrix, object_matrix[i])
+
+def rotate_z(object_matrix, value_in_degrees):
+    rotation_angle = (value_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+    # Create the 3x3 rotation matrix for the Z-xis
+    rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
+                [np.sin(rotation_angle), np.cos(rotation_angle), 0],
+                [0, 0, 1]])
+    
+    for i in range(len(object_matrix)):
+        object_matrix[i] = np.dot(rotation_matrix, object_matrix[i])
+
+def render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distCoeffs):
+
+    blade_height = 50
+    blade_width = 8
+    blade_depth = 8
+    sword_blade = create_cuboid_object(blade_height, blade_width, blade_depth)
+
+    guard_height = 1
+    guard_width = 30
+    guard_depth = 16
+    sword_guard = create_cuboid_object(guard_height,guard_width,guard_depth)
+
+    if rotation_count == 0:
+        translate_x(sword_blade, (14-blade_width)/2)
+        translate_y(sword_blade, 14-blade_height)
+        translate_z(sword_blade, blade_depth/2)
+
+        translate_x(sword_guard, (14-guard_width)/2)
+        translate_y(sword_guard, 14-guard_height)
+        translate_z(sword_guard, guard_depth/2)
+            
+    elif rotation_count == 1: # for counterclockwise 90
+        rotate_z(sword_blade, 270)
+        rotate_z(sword_guard, 270)
+
+        translate_y(sword_blade, (14-blade_width)/2 + blade_width)
+        translate_z(sword_blade, blade_depth/2)
+
+        translate_y(sword_guard, (14-guard_width)/2 + guard_width)
+        translate_z(sword_guard, guard_depth/2)
+
+    elif rotation_count == 2: # for 180
+        translate_x(sword_blade, (14-blade_width)/2)
+        translate_z(sword_blade, blade_depth/2)
+
+        translate_x(sword_guard, (14-guard_width)/2)
+        translate_z(sword_guard, guard_depth/2)
+
+    else: # for clockwise 90
+        rotate_z(sword_blade, 90)
+        rotate_z(sword_guard, 90)
+
+        translate_x(sword_blade, 14)
+        translate_y(sword_blade, (14-blade_width)/2)
+        translate_z(sword_blade, blade_depth/2)
+
+        translate_x(sword_guard, 14)
+        translate_y(sword_guard, (14-guard_width)/2)
+        translate_z(sword_guard, guard_depth/2)
+
+    render_cuboid(frame, sword_blade, rvecs, tvecs, cameraMatrix, distCoeffs)
+    render_cuboid(frame, sword_guard, rvecs, tvecs, cameraMatrix, distCoeffs)
+
+    return frame
 
 def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_show = 0):
 
@@ -228,6 +361,7 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         _, normalized_square_gray = cv2.threshold(normalized_square_gray, 128, 255, cv2.THRESH_BINARY)
         normalized_square_gray = cv2.transpose(normalized_square_gray)
         normalized_square_gray = cv2.flip(normalized_square_gray, flipCode=0)
+        
         # Compare the detected marker with the original marker image in the 4 possible rotations
         for i in range(4):
             if i == 0:
@@ -252,7 +386,6 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
     
     detected_marker_corners = np.array([detected_marker_corners[0], detected_marker_corners[3], detected_marker_corners[2], detected_marker_corners[1]])
 
-    # cv2.drawContours(frame, detected_group_contours, -1, (0, 255, 0), 5)
     if is_show == 1:
         cv2.polylines(frame, [np.array(detected_marker_corners)], isClosed=True, color=(0, 255, 0), thickness=2)
         for i, point in enumerate(detected_marker_corners):
@@ -263,135 +396,12 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
 
     rvecs, tvecs  = estimate_pose_single_marker(detected_marker_corners, 14, cameraMatrix, distCoeffs)
 
-    # Define the 3D coordinates of the cuboid
-    height = 50
-    width = 8
-    depth = 8
-    cuboid_3d = np.array([
-        [0, 0, 0],         # Bottom center
-        [width, 0, 0],     # Bottom front right
-        [width, 0, -depth],  # Bottom back right
-        [0, 0, -depth],    # Bottom back left
-        [0, height, 0],    # Top center
-        [width, height, 0],  # Top front right
-        [width, height, -depth],  # Top back right
-        [0, height, -depth]   # Top back left
-    ], dtype=np.float32)
-
-    sword_guard = np.array([
-        [0, 0, 0],         # Bottom center
-        [30, 0, 0],     # Bottom front right
-        [30, 0, -16],  # Bottom back right
-        [0, 0, -16],    # Bottom back left
-        [0, 1, 0],    # Top center
-        [30, 1, 0],  # Top front right
-        [30, 1, -16],  # Top back right
-        [0, 1, -16]   # Top back left
-    ], dtype=np.float32)
-
-
-    print("rotation value >>>>>>>>>>>", rotation_count)
-
-    if rotation_count == 0:
-        x_translation = (14-width)/2  # Adjust the value as needed
-        y_translation = 14-height  # Adjust the value as needed
-        z_translation = depth/2  # Adjust the value as needed
-        for i in range(len(cuboid_3d)):
-            print("entered")
-            cuboid_3d[i][0] += x_translation
-            cuboid_3d[i][1] += y_translation
-            cuboid_3d[i][2] += z_translation
-
-            sword_guard[i][0] += (14-30)/2
-            sword_guard[i][1] += 14
-            sword_guard[i][2] += 16/2
-            
-    elif rotation_count == 1: # for counterclockwise 90
-        angle_in_degrees = 270
-        rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
-
-        rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
-                            [np.sin(rotation_angle), np.cos(rotation_angle), 0],
-                            [0, 0, 1]])
-        
-        for i in range(len(cuboid_3d)):
-            cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
-            sword_guard[i] = np.dot(rotation_matrix, sword_guard[i])
-
-
-            # x_translation = -depth/2   # Adjust the value as needed
-            y_translation = (14-width)/2 + width  # Adjust the value as needed
-            z_translation = depth/2  # Adjust the value as needed
-
-        for i in range(len(cuboid_3d)):
-            # cuboid_3d[i][0] += x_translation
-            cuboid_3d[i][1] += y_translation
-            cuboid_3d[i][2] += z_translation
-
-            sword_guard[i][1] += (14-30)/2 + 30
-            sword_guard[i][2] += 16/2
-
-    elif rotation_count == 2: # for 180
-        x_translation = (14-width)/2  # Adjust the value as needed
-        z_translation = depth/2  # Adjust the value as needed
-
-        for i in range(len(cuboid_3d)):
-            cuboid_3d[i][0] += x_translation
-            cuboid_3d[i][2] += z_translation
-
-            sword_guard[i][0] += (14-30)/2
-            sword_guard[i][2] += 16/2
-
-    else: # for clockwise 90
-        angle_in_degrees = 90
-        rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
-
-        rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
-                    [np.sin(rotation_angle), np.cos(rotation_angle), 0],
-                    [0, 0, 1]])
-        
-        for i in range(len(cuboid_3d)):
-            cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
-            sword_guard[i] = np.dot(rotation_matrix, sword_guard[i])
-
-        x_translation = 14   # Adjust the value as needed
-        y_translation = (14-width)/2   # Adjust the value as needed
-        z_translation = depth/2  # Adjust the value as needed
-
-        for i in range(len(cuboid_3d)):
-            cuboid_3d[i][0] += x_translation
-            cuboid_3d[i][1] += y_translation
-            cuboid_3d[i][2] += z_translation
-
-            sword_guard[i][0] += 14
-            sword_guard[i][1] += (14-30)/2
-            sword_guard[i][2] += 16/2
-
-    # Project 3D pyramid points onto 2D image
-    points, _ = cv2.projectPoints(cuboid_3d, rvecs, tvecs, cameraMatrix, distCoeffs)
-    points2, _ = cv2.projectPoints(sword_guard, rvecs, tvecs, cameraMatrix, distCoeffs)
-
-
-    for i in range(4):
-        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (0, 255, 0), 2)
-        next_index = (i + 1) if i < 3 else 0  # Wrap around to connect the last point to the first
-        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[next_index][0][0]), int(points[next_index][0][1])), (0, 255, 0), 2)
-        cv2.line(frame, (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (int(points[next_index + 4][0][0]), int(points[next_index + 4][0][1])), (0, 255, 0), 2)
-
-    for i in range(4):
-        cv2.line(frame, (int(points2[i][0][0]), int(points2[i][0][1])), (int(points2[i + 4][0][0]), int(points2[i + 4][0][1])), (0, 255, 0), 2)
-        next_index = (i + 1) if i < 3 else 0  # Wrap around to connect the last point to the first
-        cv2.line(frame, (int(points2[i][0][0]), int(points2[i][0][1])), (int(points2[next_index][0][0]), int(points2[next_index][0][1])), (0, 255, 0), 2)
-        cv2.line(frame, (int(points2[i + 4][0][0]), int(points2[i + 4][0][1])), (int(points2[next_index + 4][0][0]), int(points2[next_index + 4][0][1])), (0, 255, 0), 2)
-
-
+    frame = render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distCoeffs)
 
     if is_show == 1:
         cv2.imshow("Webcam Feed ", frame)
         if detected_marker is not None:
             cv2.imshow("Detected Marker Normalized ", detected_marker)
-
-
 
         cv2.waitKey(0)
         cv2.destroyAllWindows()
