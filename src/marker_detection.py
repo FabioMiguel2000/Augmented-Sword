@@ -59,13 +59,13 @@ def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RAT
     # Create a colored label image
     colored_label_image = np.zeros((labeled_image.shape[0], labeled_image.shape[1], 3), dtype=np.uint8)
 
-    num_connected_components = 0
-    new_labels = []
+    # Uncomment this to show colored label image
+    # cv2.imshow("Colored Label Image ", colored_label_image)
 
     # Create a list to store the images and contours of each component
     component_images = []
-    component_contours = []
 
+    # The following loop will filter out (small regions based on area) AND (non-rectangular regions)
     for label in range(1, num_labels):
 
         x, y, w, h, area = stats[label]
@@ -80,9 +80,6 @@ def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RAT
             # Set pixels with the current label to the chosen color
             colored_label_image[labeled_image == label] = color
 
-            num_connected_components +=1
-            new_labels.append(label)
-
             component_mask = (labeled_image == label).astype(np.uint8)
     
             # Apply the mask to the original image to extract the component
@@ -90,38 +87,23 @@ def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RAT
             
             # Store the component image
             component_images.append(component_image)
-            
-            # Convert the component image to grayscale
-            component_gray = cv2.cvtColor(component_image, cv2.COLOR_BGR2GRAY)
-            
-            # Find the contour of the component
-            contours, _ = cv2.findContours(component_gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            # Store the contour
-            if len(contours) != 0:
-                component_contours.append(contours[0])
 
-    return colored_label_image, (component_images, component_contours)
+    return component_images
+
 
 def find_contours(image):
-    # Apply a Gaussian blur to reduce noise and improve contour detection
-    blurred = cv2.GaussianBlur(image, (5, 5), 0)
-
-    # Perform edge detection using the Canny edge detector
-    edges = cv2.Canny(blurred, threshold1=30, threshold2=150)
+    # Convert the component image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Find the contours in the edge-detected image
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # print("contour", contours)
     return contours
 
 
 def find_corners_from_countours(image, contours):
     # Initialize a list to store the filtered corners
-    filtered_corners = []
     group_of_corners = []
-    group_of_contours = []
 
     # Iterate through the detected contours and filter corners using quadrilateral fitting
     for contour in contours:
@@ -146,20 +128,10 @@ def find_corners_from_countours(image, contours):
             # Check if opposite sides are approximately parallel
             if np.abs(angles[0] - angles[2]) < max_angle_diff and np.abs(angles[1] - angles[3]) < max_angle_diff:
                 group_of_corners.append([approx])
-                group_of_contours.append([contour])
-                filtered_corners.extend(approx)
-
-    corner_image = image.copy()
-
-    for point in filtered_corners:
-        x, y = point
-        cv2.circle(corner_image, (x, y), 20, (255, 0, 0), -1)
-    
-    # cv2.imshow('Contour Detection with Corners', corner_image)
 
     print("Relevant Connected Components found = ", len(group_of_corners))
 
-    return group_of_corners, group_of_contours
+    return group_of_corners
 
 
 def estimate_pose_single_marker(corners, marker_size, mtx, distortion):
@@ -328,9 +300,15 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
 
     binary_image = image_binarization(frame, 150, 0, 1)
 
-    _, (_, component_contours) = connected_components(binary_image, frame)
+    component_images = connected_components(binary_image, frame)
 
-    group_of_corners, _ = find_corners_from_countours(frame, component_contours)
+    component_contours = []
+    for component_image in component_images:
+        contours = find_contours(component_image)
+        if len(contours) != 0:
+            component_contours.append(contours[0])
+    
+    group_of_corners = find_corners_from_countours(frame, component_contours)
 
     detected_marker_corners = []
 
@@ -361,7 +339,7 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         _, normalized_square_gray = cv2.threshold(normalized_square_gray, 128, 255, cv2.THRESH_BINARY)
         normalized_square_gray = cv2.transpose(normalized_square_gray)
         normalized_square_gray = cv2.flip(normalized_square_gray, flipCode=0)
-        
+
         # Compare the detected marker with the original marker image in the 4 possible rotations
         for i in range(4):
             if i == 0:
