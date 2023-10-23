@@ -190,7 +190,7 @@ while True:
 
                 draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
                 draw_shape = np.int32(draw_shape).reshape(-1, 2)
-                cv2.fillPoly(frame, [draw_shape], color=colors[0])
+                cv2.polylines(frame, [draw_shape], color=colors[0], isClosed=True, thickness=2)
             for shape in blade:
                 # Your set of 3D coordinates (replace with your actual coordinates)
                 coordinates = shape
@@ -200,18 +200,18 @@ while True:
 
                 draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
                 draw_shape = np.int32(draw_shape).reshape(-1, 2)
-                cv2.fillPoly(frame, [draw_shape], color=colors[1])
+                cv2.polylines(frame, [draw_shape], color=colors[1], isClosed=True, thickness=2)
 
         else:
             # Draw the filled shape of the sword with the assigned color
             for shape in handle:
                 draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
                 draw_shape = np.int32(draw_shape).reshape(-1, 2)
-                cv2.fillPoly(frame, [draw_shape], color=colors[0])
+                cv2.polylines(frame, [draw_shape], color=colors[0], isClosed=True, thickness=2)
             for shape in blade:
                 draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
                 draw_shape = np.int32(draw_shape).reshape(-1, 2)
-                cv2.fillPoly(frame, [draw_shape], color=colors[1])
+                cv2.polylines(frame, [draw_shape], color=colors[1], isClosed=True, thickness=2)
 
 
     aruco.drawDetectedMarkers(frame, corners)
