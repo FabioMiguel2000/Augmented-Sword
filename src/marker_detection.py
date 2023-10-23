@@ -23,39 +23,6 @@ k3 = 0.0
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 distCoeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float32)
 
-# def draw_cube(image, cube_side_length, rvecs, tvecs, cameraMatrix, distCoeffs):
-#     half_side = cube_side_length / 2
-#     cube_vertices = np.array([[-half_side, -half_side, 0],
-#                             [half_side, -half_side, 0],
-#                             [half_side, half_side, 0],
-#                             [-half_side, half_side, 0],
-#                             [-half_side, -half_side, half_side],
-#                             [half_side, -half_side, half_side],
-#                             [half_side, half_side, half_side],
-#                             [-half_side, half_side, half_side]])
-#     # Project the cube vertices using the estimated pose
-#     image_points, _ = cv2.projectPoints(cube_vertices, rvecs, tvecs, cameraMatrix, distCoeffs)
-
-#     # Convert image points to integer coordinates
-#     image_points = np.int32(image_points).reshape(-1, 2)
-
-#     # Create a list of edges that define the cube
-#     edges = [(0, 1), (1, 2), (2, 3), (3, 0),
-#             (4, 5), (5, 6), (6, 7), (7, 4),
-#             (0, 4), (1, 5), (2, 6), (3, 7)]
-
-#     # # Create an empty black image
-#     # image = np.zeros((800, 800, 3), dtype=np.uint8)
-
-#     # Draw cube edges on the image
-#     for edge in edges:
-#         start_point = tuple(image_points[edge[0]])
-#         end_point = tuple(image_points[edge[1]])
-#         cv2.line(image, start_point, end_point, (0, 255, 0), 2)
-
-#     # Show the resulting image with the 3D cube
-#     cv2.imshow('3D Cube on Marker', image)
-
 # Define a function to calculate the angle between two vectors
 def angle_between_vectors(v1, v2):
     dot_product = np.dot(v1, v2)
@@ -92,13 +59,13 @@ def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RAT
     # Create a colored label image
     colored_label_image = np.zeros((labeled_image.shape[0], labeled_image.shape[1], 3), dtype=np.uint8)
 
-    num_connected_components = 0
-    new_labels = []
+    # Uncomment this to show colored label image
+    # cv2.imshow("Colored Label Image ", colored_label_image)
 
     # Create a list to store the images and contours of each component
     component_images = []
-    component_contours = []
 
+    # The following loop will filter out (small regions based on area) AND (non-rectangular regions)
     for label in range(1, num_labels):
 
         x, y, w, h, area = stats[label]
@@ -113,9 +80,6 @@ def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RAT
             # Set pixels with the current label to the chosen color
             colored_label_image[labeled_image == label] = color
 
-            num_connected_components +=1
-            new_labels.append(label)
-
             component_mask = (labeled_image == label).astype(np.uint8)
     
             # Apply the mask to the original image to extract the component
@@ -123,38 +87,23 @@ def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RAT
             
             # Store the component image
             component_images.append(component_image)
-            
-            # Convert the component image to grayscale
-            component_gray = cv2.cvtColor(component_image, cv2.COLOR_BGR2GRAY)
-            
-            # Find the contour of the component
-            contours, _ = cv2.findContours(component_gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            # Store the contour
-            if len(contours) != 0:
-                component_contours.append(contours[0])
 
-    return colored_label_image, (component_images, component_contours)
+    return component_images
+
 
 def find_contours(image):
-    # Apply a Gaussian blur to reduce noise and improve contour detection
-    blurred = cv2.GaussianBlur(image, (5, 5), 0)
-
-    # Perform edge detection using the Canny edge detector
-    edges = cv2.Canny(blurred, threshold1=30, threshold2=150)
+    # Convert the component image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Find the contours in the edge-detected image
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # print("contour", contours)
     return contours
 
 
 def find_corners_from_countours(image, contours):
     # Initialize a list to store the filtered corners
-    filtered_corners = []
     group_of_corners = []
-    group_of_contours = []
 
     # Iterate through the detected contours and filter corners using quadrilateral fitting
     for contour in contours:
@@ -179,20 +128,10 @@ def find_corners_from_countours(image, contours):
             # Check if opposite sides are approximately parallel
             if np.abs(angles[0] - angles[2]) < max_angle_diff and np.abs(angles[1] - angles[3]) < max_angle_diff:
                 group_of_corners.append([approx])
-                group_of_contours.append([contour])
-                filtered_corners.extend(approx)
-
-    corner_image = image.copy()
-
-    for point in filtered_corners:
-        x, y = point
-        cv2.circle(corner_image, (x, y), 20, (255, 0, 0), -1)
-    
-    # cv2.imshow('Contour Detection with Corners', corner_image)
 
     print("Relevant Connected Components found = ", len(group_of_corners))
 
-    return group_of_corners, group_of_contours
+    return group_of_corners
 
 
 def estimate_pose_single_marker(corners, marker_size, mtx, distortion):
@@ -205,10 +144,6 @@ def estimate_pose_single_marker(corners, marker_size, mtx, distortion):
     distortion - is the camera distortion matrix
     RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
     '''
-    # marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
-    #                           [marker_size / 2, marker_size / 2, 0],
-    #                           [marker_size / 2, -marker_size / 2, 0],
-    #                           [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
     
     marker_points = np.array([[0, 0, 0],
                             [marker_size, 0, 0],
@@ -224,13 +159,180 @@ def estimate_pose_single_marker(corners, marker_size, mtx, distortion):
 
     return rvecs, tvecs
 
+def render_cuboid(frame ,cuboid_object, rvecs, tvecs, cameraMatrix, distCoeffs):
+    points, _ = cv2.projectPoints(cuboid_object, rvecs, tvecs, cameraMatrix, distCoeffs)
+
+    for i in range(4):
+        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (0, 255, 0), 2)
+        next_index = (i + 1) if i < 3 else 0  # Wrap around to connect the last point to the first
+        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[next_index][0][0]), int(points[next_index][0][1])), (0, 255, 0), 2)
+        cv2.line(frame, (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (int(points[next_index + 4][0][0]), int(points[next_index + 4][0][1])), (0, 255, 0), 2)
+
+
+def create_cuboid_object(height, width, depth):
+    return np.array([
+        [0, 0, 0],         # Bottom center
+        [width, 0, 0],     # Bottom front right
+        [width, 0, -depth],  # Bottom back right
+        [0, 0, -depth],    # Bottom back left
+        [0, height, 0],    # Top center
+        [width, height, 0],  # Top front right
+        [width, height, -depth],  # Top back right
+        [0, height, -depth]   # Top back left
+    ], dtype=np.float32)
+
+def translate_x(object_matrix, value):
+    '''
+        x-axis translation
+    '''
+    for i in range(len(object_matrix)):
+        object_matrix[i][0] += value 
+    
+    return object_matrix
+
+def translate_y(object_matrix, value):
+    '''
+        y-axis translation
+    '''
+    for i in range(len(object_matrix)):
+        object_matrix[i][1] += value # x axis translation
+    
+    return object_matrix
+
+def translate_z(object_matrix, value):
+    '''
+        z-axis translation
+    '''
+    for i in range(len(object_matrix)):
+        object_matrix[i][2] += value # x axis translation
+    
+    return object_matrix
+
+def rotate_x(object_matrix, value_in_degrees):
+    rotation_angle = (value_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+    # Create the 3x3 rotation matrix for the X-axis
+    rotation_matrix = np.array([[1, 0, 0],
+                                [0, np.cos(rotation_angle), -np.sin(rotation_angle)],
+                                [0, np.sin(rotation_angle), np.cos(rotation_angle)]])
+
+    for i in range(len(object_matrix)):
+        object_matrix[i] = np.dot(rotation_matrix, object_matrix[i])
+
+def rotate_y(object_matrix, value_in_degrees):
+    rotation_angle = (value_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+    # Create the 3x3 rotation matrix for the Y-axis
+    rotation_matrix = np.array([[np.cos(rotation_angle), 0, np.sin(rotation_angle)],
+                                [0, 1, 0],
+                                [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]])
+
+    for i in range(len(object_matrix)):
+        object_matrix[i] = np.dot(rotation_matrix, object_matrix[i])
+
+def rotate_z(object_matrix, value_in_degrees):
+    rotation_angle = (value_in_degrees*2*np.pi)/360  # Adjust the angle as needed
+
+    # Create the 3x3 rotation matrix for the Z-xis
+    rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
+                [np.sin(rotation_angle), np.cos(rotation_angle), 0],
+                [0, 0, 1]])
+    
+    for i in range(len(object_matrix)):
+        object_matrix[i] = np.dot(rotation_matrix, object_matrix[i])
+
+def render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distCoeffs):
+
+    blade_height = 50
+    blade_width = 8
+    blade_depth = 8
+    sword_blade = create_cuboid_object(blade_height, blade_width, blade_depth)
+
+    guard_height = 1
+    guard_width = 30
+    guard_depth = 16
+    sword_guard = create_cuboid_object(guard_height,guard_width,guard_depth)
+
+    pommel_height = 5
+    pommel_width = 5
+    pommel_depth = 5
+    sword_pommel = create_cuboid_object(pommel_height,pommel_width,pommel_depth)
+
+    if rotation_count == 0:
+        translate_x(sword_blade, (14-blade_width)/2)
+        translate_y(sword_blade, 14-blade_height)
+        translate_z(sword_blade, blade_depth/2)
+
+        translate_x(sword_guard, (14-guard_width)/2)
+        translate_y(sword_guard, 14-guard_height)
+        translate_z(sword_guard, guard_depth/2)
+
+        translate_x(sword_pommel, (14-pommel_width)/2)
+        translate_y(sword_pommel, 24+pommel_height)
+        translate_z(sword_pommel, pommel_depth/2)
+            
+    elif rotation_count == 1: # for counterclockwise 90
+        rotate_z(sword_blade, 270)
+        rotate_z(sword_guard, 270)
+        rotate_z(sword_pommel, 270)
+
+        translate_y(sword_blade, (14-blade_width)/2 + blade_width)
+        translate_z(sword_blade, blade_depth/2)
+
+        translate_y(sword_guard, (14-guard_width)/2 + guard_width)
+        translate_z(sword_guard, guard_depth/2)
+
+        translate_x(sword_pommel, -10-(2*pommel_height))
+        translate_y(sword_pommel, (14-pommel_width)/2 + pommel_width)
+        translate_z(sword_pommel, pommel_depth/2)
+
+    elif rotation_count == 2: # for 180
+        translate_x(sword_blade, (14-blade_width)/2)
+        translate_z(sword_blade, blade_depth/2)
+        
+        translate_x(sword_guard, (14-guard_width)/2)
+        translate_z(sword_guard, guard_depth/2)
+
+        translate_x(sword_pommel, (14-pommel_width)/2)
+        translate_y(sword_pommel, -10-(2*pommel_height))
+        translate_z(sword_pommel, pommel_width/2)
+
+    else: # for clockwise 90
+        rotate_z(sword_blade, 90)
+        rotate_z(sword_guard, 90)
+        rotate_z(sword_pommel, 90)
+
+        translate_x(sword_blade, 14)
+        translate_y(sword_blade, (14-blade_width)/2)
+        translate_z(sword_blade, blade_depth/2)
+
+        translate_x(sword_guard, 14)
+        translate_y(sword_guard, (14-guard_width)/2)
+        translate_z(sword_guard, guard_depth/2)
+
+        translate_x(sword_pommel, 14+10+(2*pommel_height))
+        translate_y(sword_pommel, (14-pommel_width)/2)
+        translate_z(sword_pommel, pommel_width/2)
+
+    render_cuboid(frame, sword_blade, rvecs, tvecs, cameraMatrix, distCoeffs)
+    render_cuboid(frame, sword_guard, rvecs, tvecs, cameraMatrix, distCoeffs)
+    render_cuboid(frame, sword_pommel, rvecs, tvecs, cameraMatrix, distCoeffs)
+
+    return frame
+
 def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_show = 0):
 
     binary_image = image_binarization(frame, 150, 0, 1)
 
-    _, (_, component_contours) = connected_components(binary_image, frame)
+    component_images = connected_components(binary_image, frame)
 
-    group_of_corners, _ = find_corners_from_countours(frame, component_contours)
+    component_contours = []
+    for component_image in component_images:
+        contours = find_contours(component_image)
+        if len(contours) != 0:
+            component_contours.append(contours[0])
+    
+    group_of_corners = find_corners_from_countours(frame, component_contours)
 
     detected_marker_corners = []
 
@@ -261,6 +363,7 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         _, normalized_square_gray = cv2.threshold(normalized_square_gray, 128, 255, cv2.THRESH_BINARY)
         normalized_square_gray = cv2.transpose(normalized_square_gray)
         normalized_square_gray = cv2.flip(normalized_square_gray, flipCode=0)
+
         # Compare the detected marker with the original marker image in the 4 possible rotations
         for i in range(4):
             if i == 0:
@@ -282,181 +385,21 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
     
     if len(detected_marker_corners) == 0:
         return frame
+    
+    detected_marker_corners = np.array([detected_marker_corners[0], detected_marker_corners[3], detected_marker_corners[2], detected_marker_corners[1]])
 
-    detected_marker_corners = sorted(selected_corners, key=lambda point: point[0])
-
-    # Determine the left and right corners
-    left_corners = detected_marker_corners[:2]
-    right_corners = detected_marker_corners[2:]
-
-    # Sort the left and right corners by their y-coordinates
-    left_corners = sorted(left_corners, key=lambda point: point[1])
-    right_corners = sorted(right_corners, key=lambda point: point[1])
-
-    # Separate the corners as top-left, top-right, bottom-right, and bottom-left
-    top_left, top_right, bottom_right, bottom_left = left_corners[0], right_corners[0], right_corners[1], left_corners[1]
-
-    detected_marker_corners = np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
-    # cv2.drawContours(frame, detected_group_contours, -1, (0, 255, 0), 5)
-    cv2.polylines(frame, [np.array(detected_marker_corners)], isClosed=True, color=(0, 255, 0), thickness=2)
-    for i, point in enumerate(detected_marker_corners):
-        x, y = point
-        cv2.circle(frame, point, 5, (0, 255, 0), -1)  # Draw a circle at the corner
-        text = f"({x}, {y})"
-        cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+    if is_show == 1:
+        cv2.polylines(frame, [np.array(detected_marker_corners)], isClosed=True, color=(0, 255, 0), thickness=2)
+        for i, point in enumerate(detected_marker_corners):
+            x, y = point
+            cv2.circle(frame, point, 5, (0, 255, 0), -1)  # Draw a circle at the corner
+            text = f"({x}, {y})"
+            cv2.putText(frame, str(i), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     rvecs, tvecs  = estimate_pose_single_marker(detected_marker_corners, 14, cameraMatrix, distCoeffs)
 
+    frame = render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distCoeffs)
 
-
-    # rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
-    #                         [np.sin(rotation_angle), np.cos(rotation_angle), 0],
-    #                         [0, 0, 1]])
-    # Create the 3x3 rotation matrix for the Y-axis
-
-
-
-    axis_points_3D = np.array([
-        [0, 0, 0],                     # Origin
-        [14, 0, 0],           # X-axis endpoint
-        [0, 14, 0],           # Y-axis endpoint
-        [0, 0, 14],            # Z-axis endpoint
-    ], dtype=np.float32)
-
-    projected_points, _ = cv2.projectPoints(axis_points_3D, rvecs, tvecs, cameraMatrix, distCoeffs)
-
-    # projected_points = np.squeeze(np.round(projected_points).astype(int))
-
-    # Draw X, Y, and Z axes on the image
-    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[1]), (0, 0, 255), 5)  # Red X-axis
-    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[2]), (0, 255, 0), 5)  # Green Y-axis
-    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[3]), (255, 0, 0), 5)  # Blue Z-axis
-    # Define the edges of the pyramid
-
-    # Define the 3D coordinates of the cuboid
-    height = 50
-    width = 8
-    depth = 8
-    cuboid_3d = np.array([
-        [0, 0, 0],         # Bottom center
-        [width, 0, 0],     # Bottom front right
-        [width, 0, -depth],  # Bottom back right
-        [0, 0, -depth],    # Bottom back left
-        [0, height, 0],    # Top center
-        [width, height, 0],  # Top front right
-        [width, height, -depth],  # Top back right
-        [0, height, -depth]   # Top back left
-    ], dtype=np.float32)
-
-
-
-    # angle_in_degrees = 90*rotation_count
-    # rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
-
-    # rotation_matrix = np.array([[np.cos(rotation_angle), 0, np.sin(rotation_angle)],
-    #                         [0, 1, 0],
-    #                         [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]])
-    
-    # for i in range(len(cuboid_3d)):
-    #     axis_points_3D[i] = np.dot(rotation_matrix, axis_points_3D[i])
-
-    # Define the rotation angle (in radians)
-    print("rotation value >>>>>>>>>>>", rotation_count)
-
-    # Create the translation matrix
-    # translation_matrix = np.array([[1, 0, 0, x_translation],
-    #                             [0, 1, 0, y_translation],
-    #                             [0, 0, 1, z_translation],
-    #                             [0, 0, 0, 1]])
-
-    # cuboid_3d = np.dot(translation_matrix, np.vstack((cuboid_3d.T, np.ones(cuboid_3d.shape[0]))))
-    # cuboid_3d = cuboid_3d[:3, :].T
-    if rotation_count == 0:
-        for i in range(len(cuboid_3d)):
-            x_translation = (14-width)/2  # Adjust the value as needed
-            y_translation = 14-height  # Adjust the value as needed
-            z_translation = depth/2  # Adjust the value as needed
-
-            cuboid_3d[i][0] += x_translation
-            cuboid_3d[i][1] += y_translation
-            cuboid_3d[i][2] += z_translation
-    elif rotation_count == 1: # for counterclockwise 90
-        angle_in_degrees = 270
-        rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
-
-        # # Create the 3x3 rotation matrix for the Y-axis
-        # rotation_matrix = np.array([[np.cos(rotation_angle), 0, np.sin(rotation_angle)],
-        #                             [0, 1, 0],
-        #                             [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]])
-        # rotation_matrix = np.array([[1, 0, 0],
-        #                     [0, np.cos(rotation_angle), -np.sin(rotation_angle)],
-        #                     [0, np.sin(rotation_angle), np.cos(rotation_angle)]])
-        rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
-                            [np.sin(rotation_angle), np.cos(rotation_angle), 0],
-                            [0, 0, 1]])
-        
-        for i in range(len(cuboid_3d)):
-            cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
-
-            # x_translation = -depth/2   # Adjust the value as needed
-            y_translation = (14-width)/2 + width  # Adjust the value as needed
-            z_translation = depth/2  # Adjust the value as needed
-
-        for i in range(len(cuboid_3d)):
-            # cuboid_3d[i][0] += x_translation
-            cuboid_3d[i][1] += y_translation
-            cuboid_3d[i][2] += z_translation
-
-    elif rotation_count == 2: # for 180
-        x_translation = (14-width)/2  # Adjust the value as needed
-        z_translation = depth/2  # Adjust the value as needed
-
-        for i in range(len(cuboid_3d)):
-            cuboid_3d[i][0] += x_translation
-            # cuboid_3d[i][1] += y_translation
-            cuboid_3d[i][2] += z_translation
-            # cuboid_3d[i][2] += z_translation
-
-    else: # for clockwise 90
-        angle_in_degrees = 90
-        rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
-
-        rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
-                    [np.sin(rotation_angle), np.cos(rotation_angle), 0],
-                    [0, 0, 1]])
-        
-        for i in range(len(cuboid_3d)):
-            cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
-
-        x_translation = 14   # Adjust the value as needed
-        y_translation = (14-width)/2   # Adjust the value as needed
-        z_translation = depth/2  # Adjust the value as needed
-
-        for i in range(len(cuboid_3d)):
-            cuboid_3d[i][0] += x_translation
-            cuboid_3d[i][1] += y_translation
-            cuboid_3d[i][2] += z_translation
-
-        
-        
-    
-    # Create the 3x3 rotation matrix for the Z-axis
-
-
-    # for i in range(len(cuboid_3d)):
-    #     cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
-
-    # Solve PnP problem to estimate pose
-    # tvecs, _ = cv2.Rodrigues(tvecs)
-
-    # Project 3D pyramid points onto 2D image
-    points, _ = cv2.projectPoints(cuboid_3d, rvecs, tvecs, cameraMatrix, distCoeffs)
-
-    for i in range(4):
-        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (0, 255, 0), 2)
-        next_index = (i + 1) if i < 3 else 0  # Wrap around to connect the last point to the first
-        cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[next_index][0][0]), int(points[next_index][0][1])), (0, 255, 0), 2)
-        cv2.line(frame, (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (int(points[next_index + 4][0][0]), int(points[next_index + 4][0][1])), (0, 255, 0), 2)
     if is_show == 1:
         cv2.imshow("Webcam Feed ", frame)
         if detected_marker is not None:
