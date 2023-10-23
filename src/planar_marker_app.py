@@ -8,35 +8,6 @@ import numpy as np
 # Load the image in which you want to detect the marker
 image = cv2.imread("image_with_marker.jpg")
 
-def draw_axis(img, corners, imgpts):
-    corner = tuple(corners[0].ravel())
-    img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
-    img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
-    img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
-    return img
-
-# Function to draw a 3D pyramid on the marker
-def draw_pyramid(image, marker_corners):
-    pyramid_height = 200
-    if len(marker_corners) == 4:
-        apex = (int((marker_corners[0][0] + marker_corners[2][0]) / 2),
-                int((marker_corners[0][1] + marker_corners[2][1]) / 2) - pyramid_height)
-
-        # Draw the edges of the 3D pyramid using cv2.line()
-        for i in range(4):
-            point1 = marker_corners[i]
-            point2 = marker_corners[(i + 1) % 4]
-            cv2.line(image, point1, point2, (0, 255, 0), 2)
-
-            # Connect each marker corner to the apex of the pyramid
-            cv2.line(image, marker_corners[i], apex, (0, 255, 0), 2)
-
-        # Connect the apex to form the base of the pyramid
-        for i in range(4):
-            cv2.line(image, apex, marker_corners[i], (0, 255, 0), 2)
-
-    return image
-
 # Initialize the webcam (you may need to change the camera index if you have multiple cameras)
 cap = cv2.VideoCapture(0)
 
@@ -70,40 +41,12 @@ except:
     p2 = 0.0
     k3 = 0.0
 
-
 # Construct the camera matrix and distortion coefficients
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 distCoeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float32)
 
-# Define a threshold for black pixels
-black_threshold = [30, 30, 30]
-
-# Read sword image
-img = cv2.imread('../img/sword.png')
-assert img is not None, "Image could not be read, check with os.path.exists()"
-# Downscale the image
-down_width = img.shape[1]//4
-down_height = img.shape[0]//4
-down_points = (down_width, down_height)
-img = cv2.resize(img, (down_width,down_height), interpolation= cv2.INTER_LINEAR)
-
-# Define the marker's original corners (ID: 0)
-marker_orig_width = 100
-y_offset = (img.shape[0] - marker_orig_width)//2
-x_offset = (img.shape[1] - marker_orig_width)//2
-marker_orig = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
-# Rotate marker_orig by ~120 degrees
-rotation_matrix = cv2.getRotationMatrix2D((x_offset + marker_orig_width/2, y_offset + marker_orig_width/2), 114 + 180, 1)
-marker_orig = cv2.transform(marker_orig.reshape(-1, 1, 2), rotation_matrix).reshape(4, 2)
-
-# Define the marker's original corners (ID: 1)
-y_offset = y_offset
-x_offset = x_offset
-marker_orig1 = np.float32([[x_offset, y_offset], [x_offset+marker_orig_width, y_offset],[x_offset+marker_orig_width, y_offset+marker_orig_width],[x_offset, y_offset+marker_orig_width]])
-# Rotate marker_orig1 by ~(-120) degrees
-rotation_matrix = cv2.getRotationMatrix2D((x_offset + marker_orig_width/2, y_offset + marker_orig_width/2), -114 + 180, 1)
-marker_orig1 = cv2.transform(marker_orig1.reshape(-1, 1, 2), rotation_matrix).reshape(4, 2)
-
+marker_1 = cv2.imread('../img/samples/marker_1.png')
+marker_0 = cv2.imread('../img/samples/marker_0.png')
 while True:
 
     ret, frame = cap.read()
@@ -113,8 +56,8 @@ while True:
         print("Error: Could not read frame from webcam.")
         break
 
-    original_marker = cv2.imread('../img/samples/marker_1.png')
-    frame = detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs)
+
+    frame = detect_marker_on_frame(frame, marker_0, cameraMatrix, distCoeffs)
 
     # Display the result image
     cv2.imshow("Webcam Feed", frame)
