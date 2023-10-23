@@ -282,28 +282,33 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
     
     if len(detected_marker_corners) == 0:
         return frame
+    
+    # Order the corners
 
-    detected_marker_corners = sorted(selected_corners, key=lambda point: point[0])
+    # detected_marker_corners = sorted(selected_corners, key=lambda point: point[0])
 
-    # Determine the left and right corners
-    left_corners = detected_marker_corners[:2]
-    right_corners = detected_marker_corners[2:]
+    # # Determine the left and right corners
+    # left_corners = detected_marker_corners[:2]
+    # right_corners = detected_marker_corners[2:]
 
-    # Sort the left and right corners by their y-coordinates
-    left_corners = sorted(left_corners, key=lambda point: point[1])
-    right_corners = sorted(right_corners, key=lambda point: point[1])
+    # # Sort the left and right corners by their y-coordinates
+    # left_corners = sorted(left_corners, key=lambda point: point[1])
+    # right_corners = sorted(right_corners, key=lambda point: point[1])
 
-    # Separate the corners as top-left, top-right, bottom-right, and bottom-left
-    top_left, top_right, bottom_right, bottom_left = left_corners[0], right_corners[0], right_corners[1], left_corners[1]
+    # # Separate the corners as top-left, top-right, bottom-right, and bottom-left
+    # top_left, top_right, bottom_right, bottom_left = left_corners[0], right_corners[0], right_corners[1], left_corners[1]
 
-    detected_marker_corners = np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
+    # detected_marker_corners = np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
+
+    detected_marker_corners = np.array([detected_marker_corners[0], detected_marker_corners[3], detected_marker_corners[2], detected_marker_corners[1]])
+
     # cv2.drawContours(frame, detected_group_contours, -1, (0, 255, 0), 5)
     cv2.polylines(frame, [np.array(detected_marker_corners)], isClosed=True, color=(0, 255, 0), thickness=2)
     for i, point in enumerate(detected_marker_corners):
         x, y = point
         cv2.circle(frame, point, 5, (0, 255, 0), -1)  # Draw a circle at the corner
         text = f"({x}, {y})"
-        cv2.putText(frame, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        cv2.putText(frame, str(i), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     rvecs, tvecs  = estimate_pose_single_marker(detected_marker_corners, 14, cameraMatrix, distCoeffs)
 
@@ -363,23 +368,16 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
     # Define the rotation angle (in radians)
     print("rotation value >>>>>>>>>>>", rotation_count)
 
-    # Create the translation matrix
-    # translation_matrix = np.array([[1, 0, 0, x_translation],
-    #                             [0, 1, 0, y_translation],
-    #                             [0, 0, 1, z_translation],
-    #                             [0, 0, 0, 1]])
-
-    # cuboid_3d = np.dot(translation_matrix, np.vstack((cuboid_3d.T, np.ones(cuboid_3d.shape[0]))))
-    # cuboid_3d = cuboid_3d[:3, :].T
     if rotation_count == 0:
+        x_translation = (14-width)/2  # Adjust the value as needed
+        y_translation = 14-height  # Adjust the value as needed
+        z_translation = depth/2  # Adjust the value as needed
         for i in range(len(cuboid_3d)):
-            x_translation = (14-width)/2  # Adjust the value as needed
-            y_translation = 14-height  # Adjust the value as needed
-            z_translation = depth/2  # Adjust the value as needed
-
+            print("entered")
             cuboid_3d[i][0] += x_translation
             cuboid_3d[i][1] += y_translation
             cuboid_3d[i][2] += z_translation
+            
     elif rotation_count == 1: # for counterclockwise 90
         angle_in_degrees = 270
         rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
