@@ -253,12 +253,13 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
     detected_marker_corners = np.array([detected_marker_corners[0], detected_marker_corners[3], detected_marker_corners[2], detected_marker_corners[1]])
 
     # cv2.drawContours(frame, detected_group_contours, -1, (0, 255, 0), 5)
-    cv2.polylines(frame, [np.array(detected_marker_corners)], isClosed=True, color=(0, 255, 0), thickness=2)
-    for i, point in enumerate(detected_marker_corners):
-        x, y = point
-        cv2.circle(frame, point, 5, (0, 255, 0), -1)  # Draw a circle at the corner
-        text = f"({x}, {y})"
-        cv2.putText(frame, str(i), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+    if is_show == 1:
+        cv2.polylines(frame, [np.array(detected_marker_corners)], isClosed=True, color=(0, 255, 0), thickness=2)
+        for i, point in enumerate(detected_marker_corners):
+            x, y = point
+            cv2.circle(frame, point, 5, (0, 255, 0), -1)  # Draw a circle at the corner
+            text = f"({x}, {y})"
+            cv2.putText(frame, str(i), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     rvecs, tvecs  = estimate_pose_single_marker(detected_marker_corners, 14, cameraMatrix, distCoeffs)
 
@@ -277,6 +278,17 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         [0, height, -depth]   # Top back left
     ], dtype=np.float32)
 
+    sword_guard = np.array([
+        [0, 0, 0],         # Bottom center
+        [30, 0, 0],     # Bottom front right
+        [30, 0, -16],  # Bottom back right
+        [0, 0, -16],    # Bottom back left
+        [0, 1, 0],    # Top center
+        [30, 1, 0],  # Top front right
+        [30, 1, -16],  # Top back right
+        [0, 1, -16]   # Top back left
+    ], dtype=np.float32)
+
 
     print("rotation value >>>>>>>>>>>", rotation_count)
 
@@ -289,6 +301,10 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
             cuboid_3d[i][0] += x_translation
             cuboid_3d[i][1] += y_translation
             cuboid_3d[i][2] += z_translation
+
+            sword_guard[i][0] += (14-30)/2
+            sword_guard[i][1] += 14
+            sword_guard[i][2] += 16/2
             
     elif rotation_count == 1: # for counterclockwise 90
         angle_in_degrees = 270
@@ -300,6 +316,8 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         
         for i in range(len(cuboid_3d)):
             cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
+            sword_guard[i] = np.dot(rotation_matrix, sword_guard[i])
+
 
             # x_translation = -depth/2   # Adjust the value as needed
             y_translation = (14-width)/2 + width  # Adjust the value as needed
@@ -310,15 +328,19 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
             cuboid_3d[i][1] += y_translation
             cuboid_3d[i][2] += z_translation
 
+            sword_guard[i][1] += (14-30)/2 + 30
+            sword_guard[i][2] += 16/2
+
     elif rotation_count == 2: # for 180
         x_translation = (14-width)/2  # Adjust the value as needed
         z_translation = depth/2  # Adjust the value as needed
 
         for i in range(len(cuboid_3d)):
             cuboid_3d[i][0] += x_translation
-            # cuboid_3d[i][1] += y_translation
             cuboid_3d[i][2] += z_translation
-            # cuboid_3d[i][2] += z_translation
+
+            sword_guard[i][0] += (14-30)/2
+            sword_guard[i][2] += 16/2
 
     else: # for clockwise 90
         angle_in_degrees = 90
@@ -330,6 +352,7 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         
         for i in range(len(cuboid_3d)):
             cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
+            sword_guard[i] = np.dot(rotation_matrix, sword_guard[i])
 
         x_translation = 14   # Adjust the value as needed
         y_translation = (14-width)/2   # Adjust the value as needed
@@ -340,18 +363,35 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
             cuboid_3d[i][1] += y_translation
             cuboid_3d[i][2] += z_translation
 
+            sword_guard[i][0] += 14
+            sword_guard[i][1] += (14-30)/2
+            sword_guard[i][2] += 16/2
+
     # Project 3D pyramid points onto 2D image
     points, _ = cv2.projectPoints(cuboid_3d, rvecs, tvecs, cameraMatrix, distCoeffs)
+    points2, _ = cv2.projectPoints(sword_guard, rvecs, tvecs, cameraMatrix, distCoeffs)
+
 
     for i in range(4):
         cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (0, 255, 0), 2)
         next_index = (i + 1) if i < 3 else 0  # Wrap around to connect the last point to the first
         cv2.line(frame, (int(points[i][0][0]), int(points[i][0][1])), (int(points[next_index][0][0]), int(points[next_index][0][1])), (0, 255, 0), 2)
         cv2.line(frame, (int(points[i + 4][0][0]), int(points[i + 4][0][1])), (int(points[next_index + 4][0][0]), int(points[next_index + 4][0][1])), (0, 255, 0), 2)
+
+    for i in range(4):
+        cv2.line(frame, (int(points2[i][0][0]), int(points2[i][0][1])), (int(points2[i + 4][0][0]), int(points2[i + 4][0][1])), (0, 255, 0), 2)
+        next_index = (i + 1) if i < 3 else 0  # Wrap around to connect the last point to the first
+        cv2.line(frame, (int(points2[i][0][0]), int(points2[i][0][1])), (int(points2[next_index][0][0]), int(points2[next_index][0][1])), (0, 255, 0), 2)
+        cv2.line(frame, (int(points2[i + 4][0][0]), int(points2[i + 4][0][1])), (int(points2[next_index + 4][0][0]), int(points2[next_index + 4][0][1])), (0, 255, 0), 2)
+
+
+
     if is_show == 1:
         cv2.imshow("Webcam Feed ", frame)
         if detected_marker is not None:
             cv2.imshow("Detected Marker Normalized ", detected_marker)
+
+
 
         cv2.waitKey(0)
         cv2.destroyAllWindows()
