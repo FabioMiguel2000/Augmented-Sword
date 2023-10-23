@@ -28,17 +28,10 @@ cy = frame_height / 2
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 distCoeffs = np.zeros((5, 1))
 
-# Cube size in centimeters
+# Marker size in centimeters
 cube_size = 13
-
-# Define the 3D coordinates of the center of the markers on the cube based on the cube size
-marker_coordinates_3d = [
-    np.array([[-cube_size / 2, -cube_size / 2, 0.0]]),    # Top marker (ID: 0)
-    np.array([[0.0, -cube_size / 2, cube_size / 2]]),     # Front marker (ID: 1)
-    np.array([[-cube_size / 2, 0.0, cube_size / 2]]),     # Right marker (ID: 2)
-    np.array([[-cube_size / 2, -cube_size / 2, cube_size]]),  # Back marker (ID: 3)
-    np.array([[-cube_size, -cube_size / 2, cube_size / 2]])  # Left marker (ID: 4)
-]
+# Scale factor
+scale_factor = 1
 
 # Define colors for each side
 colors = [(0, 0, 255),  # Red
@@ -127,17 +120,14 @@ handle.append(
     [cube_size/4, -cube_size*2, -3*cube_size/4],
 ], dtype=np.float32))
 top_marker_translation = [0, -cube_size/2, -cube_size]
-#lower_handle = np.vstack((lower_handle_top, lower_handle_bottom, lower_handle_left, lower_handle_right, lower_handle_front, lower_handle_back))
 
-scale_factor = 1.3
 # Scale the shapes
 for i in range(len(handle)):
     handle[i] *= scale_factor
-
 for i in range(len(blade)):
     blade[i] *= scale_factor
 
-
+# Compute necessary transformations for the top marker
 def get_top_shape(shape, rotation_matrix):
     coordinates = shape
     # Apply the rotation to the coordinates
@@ -188,12 +178,11 @@ while True:
         # Get vecs of closest marker
         rvec, tvec = vecs[id_index]
         if (id == 0):
-            # Your rotation vector (rvec)
-            rvec2 = np.array([np.pi/2, 0, 0])  # Rotate by 90 degrees (π/2) around the Z-axis
+            rvec2 = np.array([np.pi/2, 0, 0])
             # Convert the rotation vector to a rotation matrix
             rotation_matrix, _ = cv2.Rodrigues(rvec2)
 
-            # Draw the filled shape of the sword with the assigned color
+            # Draw sword (handle and blade)
             for shape in handle:
                 shape = get_top_shape(shape, rotation_matrix)
                 draw_poly(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[0])
@@ -208,7 +197,7 @@ while True:
                 draw_polylines(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[4])
 
         else:
-            # Draw the filled shape of the sword with the assigned color
+            # Draw sword (handle and blade)
             for shape in handle:
                 draw_poly(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[0])
             for shape in handle:
