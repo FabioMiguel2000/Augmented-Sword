@@ -23,39 +23,6 @@ k3 = 0.0
 cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
 distCoeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float32)
 
-# def draw_cube(image, cube_side_length, rvecs, tvecs, cameraMatrix, distCoeffs):
-#     half_side = cube_side_length / 2
-#     cube_vertices = np.array([[-half_side, -half_side, 0],
-#                             [half_side, -half_side, 0],
-#                             [half_side, half_side, 0],
-#                             [-half_side, half_side, 0],
-#                             [-half_side, -half_side, half_side],
-#                             [half_side, -half_side, half_side],
-#                             [half_side, half_side, half_side],
-#                             [-half_side, half_side, half_side]])
-#     # Project the cube vertices using the estimated pose
-#     image_points, _ = cv2.projectPoints(cube_vertices, rvecs, tvecs, cameraMatrix, distCoeffs)
-
-#     # Convert image points to integer coordinates
-#     image_points = np.int32(image_points).reshape(-1, 2)
-
-#     # Create a list of edges that define the cube
-#     edges = [(0, 1), (1, 2), (2, 3), (3, 0),
-#             (4, 5), (5, 6), (6, 7), (7, 4),
-#             (0, 4), (1, 5), (2, 6), (3, 7)]
-
-#     # # Create an empty black image
-#     # image = np.zeros((800, 800, 3), dtype=np.uint8)
-
-#     # Draw cube edges on the image
-#     for edge in edges:
-#         start_point = tuple(image_points[edge[0]])
-#         end_point = tuple(image_points[edge[1]])
-#         cv2.line(image, start_point, end_point, (0, 255, 0), 2)
-
-#     # Show the resulting image with the 3D cube
-#     cv2.imshow('3D Cube on Marker', image)
-
 # Define a function to calculate the angle between two vectors
 def angle_between_vectors(v1, v2):
     dot_product = np.dot(v1, v2)
@@ -283,23 +250,6 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
     if len(detected_marker_corners) == 0:
         return frame
     
-    # Order the corners
-
-    # detected_marker_corners = sorted(selected_corners, key=lambda point: point[0])
-
-    # # Determine the left and right corners
-    # left_corners = detected_marker_corners[:2]
-    # right_corners = detected_marker_corners[2:]
-
-    # # Sort the left and right corners by their y-coordinates
-    # left_corners = sorted(left_corners, key=lambda point: point[1])
-    # right_corners = sorted(right_corners, key=lambda point: point[1])
-
-    # # Separate the corners as top-left, top-right, bottom-right, and bottom-left
-    # top_left, top_right, bottom_right, bottom_left = left_corners[0], right_corners[0], right_corners[1], left_corners[1]
-
-    # detected_marker_corners = np.array([top_left, top_right, bottom_right, bottom_left], dtype=np.int32)
-
     detected_marker_corners = np.array([detected_marker_corners[0], detected_marker_corners[3], detected_marker_corners[2], detected_marker_corners[1]])
 
     # cv2.drawContours(frame, detected_group_contours, -1, (0, 255, 0), 5)
@@ -311,32 +261,6 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         cv2.putText(frame, str(i), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     rvecs, tvecs  = estimate_pose_single_marker(detected_marker_corners, 14, cameraMatrix, distCoeffs)
-
-
-
-    # rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
-    #                         [np.sin(rotation_angle), np.cos(rotation_angle), 0],
-    #                         [0, 0, 1]])
-    # Create the 3x3 rotation matrix for the Y-axis
-
-
-
-    axis_points_3D = np.array([
-        [0, 0, 0],                     # Origin
-        [14, 0, 0],           # X-axis endpoint
-        [0, 14, 0],           # Y-axis endpoint
-        [0, 0, 14],            # Z-axis endpoint
-    ], dtype=np.float32)
-
-    projected_points, _ = cv2.projectPoints(axis_points_3D, rvecs, tvecs, cameraMatrix, distCoeffs)
-
-    # projected_points = np.squeeze(np.round(projected_points).astype(int))
-
-    # Draw X, Y, and Z axes on the image
-    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[1]), (0, 0, 255), 5)  # Red X-axis
-    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[2]), (0, 255, 0), 5)  # Green Y-axis
-    # frame = cv2.line(frame, tuple(axis_points_2D[0]), tuple(axis_points_2D[3]), (255, 0, 0), 5)  # Blue Z-axis
-    # Define the edges of the pyramid
 
     # Define the 3D coordinates of the cuboid
     height = 50
@@ -354,18 +278,6 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
     ], dtype=np.float32)
 
 
-
-    # angle_in_degrees = 90*rotation_count
-    # rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
-
-    # rotation_matrix = np.array([[np.cos(rotation_angle), 0, np.sin(rotation_angle)],
-    #                         [0, 1, 0],
-    #                         [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]])
-    
-    # for i in range(len(cuboid_3d)):
-    #     axis_points_3D[i] = np.dot(rotation_matrix, axis_points_3D[i])
-
-    # Define the rotation angle (in radians)
     print("rotation value >>>>>>>>>>>", rotation_count)
 
     if rotation_count == 0:
@@ -382,13 +294,6 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         angle_in_degrees = 270
         rotation_angle = (angle_in_degrees*2*np.pi)/360  # Adjust the angle as needed
 
-        # # Create the 3x3 rotation matrix for the Y-axis
-        # rotation_matrix = np.array([[np.cos(rotation_angle), 0, np.sin(rotation_angle)],
-        #                             [0, 1, 0],
-        #                             [-np.sin(rotation_angle), 0, np.cos(rotation_angle)]])
-        # rotation_matrix = np.array([[1, 0, 0],
-        #                     [0, np.cos(rotation_angle), -np.sin(rotation_angle)],
-        #                     [0, np.sin(rotation_angle), np.cos(rotation_angle)]])
         rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle), 0],
                             [np.sin(rotation_angle), np.cos(rotation_angle), 0],
                             [0, 0, 1]])
@@ -434,18 +339,6 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
             cuboid_3d[i][0] += x_translation
             cuboid_3d[i][1] += y_translation
             cuboid_3d[i][2] += z_translation
-
-        
-        
-    
-    # Create the 3x3 rotation matrix for the Z-axis
-
-
-    # for i in range(len(cuboid_3d)):
-    #     cuboid_3d[i] = np.dot(rotation_matrix, cuboid_3d[i])
-
-    # Solve PnP problem to estimate pose
-    # tvecs, _ = cv2.Rodrigues(tvecs)
 
     # Project 3D pyramid points onto 2D image
     points, _ = cv2.projectPoints(cuboid_3d, rvecs, tvecs, cameraMatrix, distCoeffs)
