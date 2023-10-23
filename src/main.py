@@ -52,8 +52,6 @@ blade = []
 handle = []
 
 # Sword Blades --------------------------------------
-
-# Sword Blades --------------------------------------
 blade.append(
     np.array([
     [-cube_size, -cube_size / 2, cube_size/2],
@@ -131,8 +129,6 @@ handle.append(
 top_marker_translation = [0, -cube_size/2, -cube_size]
 #lower_handle = np.vstack((lower_handle_top, lower_handle_bottom, lower_handle_left, lower_handle_right, lower_handle_front, lower_handle_back))
 
-
-
 scale_factor = 1.3
 # Scale the shapes
 for i in range(len(handle)):
@@ -141,6 +137,23 @@ for i in range(len(handle)):
 for i in range(len(blade)):
     blade[i] *= scale_factor
 
+
+def get_top_shape(shape, rotation_matrix):
+    coordinates = shape
+    # Apply the rotation to the coordinates
+    rotated_coordinates = np.dot(coordinates, rotation_matrix.T)
+    new_shape = rotated_coordinates + top_marker_translation
+    return new_shape
+
+def draw_poly(shape, rvec, tvec, cameraMatrix, distCoeffs, color):
+    projected_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
+    projected_shape = np.int32(projected_shape).reshape(-1, 2)
+    cv2.fillPoly(frame, [projected_shape], color=color)
+
+def draw_polylines(shape, rvec, tvec, cameraMatrix, distCoeffs, color):
+    projected_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
+    projected_shape = np.int32(projected_shape).reshape(-1, 2)
+    cv2.polylines(frame, [projected_shape], color=color, isClosed=True, thickness=2)
 
 while True:
     ret, frame = cap.read()
@@ -182,42 +195,31 @@ while True:
 
             # Draw the filled shape of the sword with the assigned color
             for shape in handle:
-                # Your set of 3D coordinates (replace with your actual coordinates)
-                coordinates = shape
-                # Apply the rotation to the coordinates
-                rotated_coordinates = np.dot(coordinates, rotation_matrix.T)
-                shape = rotated_coordinates + top_marker_translation
-
-                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
-                draw_shape = np.int32(draw_shape).reshape(-1, 2)
-                cv2.polylines(frame, [draw_shape], color=colors[0], isClosed=True, thickness=2)
+                shape = get_top_shape(shape, rotation_matrix)
+                draw_poly(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[0])
+            for shape in handle:
+                shape = get_top_shape(shape, rotation_matrix)
+                draw_polylines(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[4])
             for shape in blade:
-                # Your set of 3D coordinates (replace with your actual coordinates)
-                coordinates = shape
-                # Apply the rotation to the coordinates
-                rotated_coordinates = np.dot(coordinates, rotation_matrix.T)
-                shape = rotated_coordinates + top_marker_translation
-
-                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
-                draw_shape = np.int32(draw_shape).reshape(-1, 2)
-                cv2.polylines(frame, [draw_shape], color=colors[1], isClosed=True, thickness=2)
+                shape = get_top_shape(shape, rotation_matrix)
+                draw_poly(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[1])
+            for shape in blade:
+                shape = get_top_shape(shape, rotation_matrix)
+                draw_polylines(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[4])
 
         else:
             # Draw the filled shape of the sword with the assigned color
             for shape in handle:
-                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
-                draw_shape = np.int32(draw_shape).reshape(-1, 2)
-                cv2.polylines(frame, [draw_shape], color=colors[0], isClosed=True, thickness=2)
+                draw_poly(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[0])
+            for shape in handle:
+                draw_polylines(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[4])
             for shape in blade:
-                draw_shape, _ = cv2.projectPoints(shape, rvec, tvec, cameraMatrix, distCoeffs)
-                draw_shape = np.int32(draw_shape).reshape(-1, 2)
-                cv2.polylines(frame, [draw_shape], color=colors[1], isClosed=True, thickness=2)
-
-
+                draw_poly(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[1])
+            for shape in blade:
+                draw_polylines(shape, rvec, tvec, cameraMatrix, distCoeffs, colors[4])
+            
     aruco.drawDetectedMarkers(frame, corners)
-
     cv2.imshow("Webcam Feed", frame)
-
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
