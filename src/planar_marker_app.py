@@ -56,8 +56,7 @@ while True:
         print("Error: Could not read frame from webcam.")
         break
 
-
-    frame = detect_marker_on_frame(frame, marker_0, cameraMatrix, distCoeffs)
+    frame = detect_marker_on_frame(frame, [marker_0, marker_1], cameraMatrix, distCoeffs)
 
     # Display the result image
     cv2.imshow("Webcam Feed", frame)

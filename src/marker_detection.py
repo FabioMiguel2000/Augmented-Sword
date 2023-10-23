@@ -320,7 +320,7 @@ def render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distC
 
     return frame
 
-def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_show = 0):
+def detect_marker_on_frame(frame, original_markers, cameraMatrix, distCoeffs, is_show = 0):
 
     binary_image = image_binarization(frame, 150, 0, 1)
 
@@ -341,7 +341,10 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
     for group in group_of_corners:
         selected_corners = group[0]
 
-        square_size =  original_marker.shape[0]  # Adjust this value as needed
+        if original_markers[0].shape[0] != original_markers[1].shape[0] or original_markers[0].shape[1] != original_markers[1].shape[1]:
+            print("\n\n!!!  WARNING: Markers have to have same width and height!\n\n")
+            return frame
+        square_size =  original_markers[0].shape[0]  # Adjust this value as needed
 
         # Create the normalized square points
         normalized_corners = np.array([[0, 0], [square_size, 0], [square_size, square_size], [0, square_size]], dtype=np.float32)
@@ -352,12 +355,10 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
         # Apply the perspective transformation
         normalized_square = cv2.warpPerspective(frame, M, (square_size, square_size))
         
-
         # Ensure that both images have the same dimensions
-        normalized_square = cv2.resize(normalized_square, (original_marker.shape[1], original_marker.shape[0]))
+        normalized_square = cv2.resize(normalized_square, (original_markers[0].shape[1], original_markers[0].shape[0]))
 
-        # Convert the images to grayscale for SSIM calculation
-        original_marker_gray = cv2.cvtColor(original_marker, cv2.COLOR_BGR2GRAY)
+        # Convert the images to grayscale for template matching calculation
         normalized_square_gray = cv2.cvtColor(normalized_square, cv2.COLOR_BGR2GRAY)
         normalized_square_gray = cv2.flip(normalized_square_gray, 1)
         _, normalized_square_gray = cv2.threshold(normalized_square_gray, 128, 255, cv2.THRESH_BINARY)
@@ -370,13 +371,15 @@ def detect_marker_on_frame(frame, original_marker, cameraMatrix, distCoeffs, is_
                 cv2.imshow("The detected marker = ",  normalized_square_gray)
                 
             # Use Template Matching to compare the detected marker with the marker image
-            result = cv2.matchTemplate(original_marker_gray, normalized_square_gray, cv2.TM_CCORR_NORMED)
+            for original_marker in original_markers:
+                original_marker = cv2.cvtColor(original_marker, cv2.COLOR_BGR2GRAY)
+                result = cv2.matchTemplate(original_marker, normalized_square_gray, cv2.TM_CCORR_NORMED)
             
-            if result > 0.95 and result > best_result:
-                rotation_count = i
-                detected_marker_corners = selected_corners
-                detected_marker = normalized_square_gray
-                best_result = result
+                if result > 0.95 and result > best_result:
+                    rotation_count = i
+                    detected_marker_corners = selected_corners
+                    detected_marker = normalized_square_gray
+                    best_result = result
 
             # Rotate 90 degrees counterclockwise
             normalized_square_gray = cv2.transpose(normalized_square_gray)
