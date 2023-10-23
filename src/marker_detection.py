@@ -253,6 +253,11 @@ def render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distC
     guard_depth = 16
     sword_guard = create_cuboid_object(guard_height,guard_width,guard_depth)
 
+    pommel_height = 5
+    pommel_width = 5
+    pommel_depth = 5
+    sword_pommel = create_cuboid_object(pommel_height,pommel_width,pommel_depth)
+
     if rotation_count == 0:
         translate_x(sword_blade, (14-blade_width)/2)
         translate_y(sword_blade, 14-blade_height)
@@ -261,10 +266,15 @@ def render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distC
         translate_x(sword_guard, (14-guard_width)/2)
         translate_y(sword_guard, 14-guard_height)
         translate_z(sword_guard, guard_depth/2)
+
+        translate_x(sword_pommel, (14-pommel_width)/2)
+        translate_y(sword_pommel, 24+pommel_height)
+        translate_z(sword_pommel, pommel_depth/2)
             
     elif rotation_count == 1: # for counterclockwise 90
         rotate_z(sword_blade, 270)
         rotate_z(sword_guard, 270)
+        rotate_z(sword_pommel, 270)
 
         translate_y(sword_blade, (14-blade_width)/2 + blade_width)
         translate_z(sword_blade, blade_depth/2)
@@ -272,16 +282,25 @@ def render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distC
         translate_y(sword_guard, (14-guard_width)/2 + guard_width)
         translate_z(sword_guard, guard_depth/2)
 
+        translate_x(sword_pommel, -10-(2*pommel_height))
+        translate_y(sword_pommel, (14-pommel_width)/2 + pommel_width)
+        translate_z(sword_pommel, pommel_depth/2)
+
     elif rotation_count == 2: # for 180
         translate_x(sword_blade, (14-blade_width)/2)
         translate_z(sword_blade, blade_depth/2)
-
+        
         translate_x(sword_guard, (14-guard_width)/2)
         translate_z(sword_guard, guard_depth/2)
+
+        translate_x(sword_pommel, (14-pommel_width)/2)
+        translate_y(sword_pommel, -10-(2*pommel_height))
+        translate_z(sword_pommel, pommel_width/2)
 
     else: # for clockwise 90
         rotate_z(sword_blade, 90)
         rotate_z(sword_guard, 90)
+        rotate_z(sword_pommel, 90)
 
         translate_x(sword_blade, 14)
         translate_y(sword_blade, (14-blade_width)/2)
@@ -291,8 +310,13 @@ def render_sword_object(frame, rotation_count, rvecs, tvecs, cameraMatrix, distC
         translate_y(sword_guard, (14-guard_width)/2)
         translate_z(sword_guard, guard_depth/2)
 
+        translate_x(sword_pommel, 14+10+(2*pommel_height))
+        translate_y(sword_pommel, (14-pommel_width)/2)
+        translate_z(sword_pommel, pommel_width/2)
+
     render_cuboid(frame, sword_blade, rvecs, tvecs, cameraMatrix, distCoeffs)
     render_cuboid(frame, sword_guard, rvecs, tvecs, cameraMatrix, distCoeffs)
+    render_cuboid(frame, sword_pommel, rvecs, tvecs, cameraMatrix, distCoeffs)
 
     return frame
 
