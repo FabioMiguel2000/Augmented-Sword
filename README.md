@@ -3,14 +3,15 @@
 The main objective of this project is to develop an application that augments an image of a person wielding a reference marker by rendering a virtual sword associated with the marker. The marker may be a planar piece of wood or hard cardboard with two patterns, one on each face of the planar object. Alternatively, you may develop an improved version of the application, using a cube with patterns on five of its faces (on all faces except the one that is facing the user’s hand).
 
 
+
 <table>
    <tr>
     <th>Planar Marker Virtual Sword</th>
-    <th><img src="https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/PlanarMarker" alt="Planar Marker"></th>
+    <th><img src="https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/img/PlanarMarker.png" alt="Planar Marker"></th>
   </tr>
   <tr>
     <th>Cube Marker Virtual Sword</th>
-    <th><img src="https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/CubeMarker" alt="Planar Marker" ></th>
+    <th><img src="https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/img/CubeMarker.png" alt="Planar Marker" ></th>
   </tr>
 </table>
 
