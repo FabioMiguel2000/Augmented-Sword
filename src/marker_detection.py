@@ -1,28 +1,6 @@
 import cv2
 import numpy as np
 
-image_path = '../img/samples/examples/example_2.png'
-marker_path = '../img/samples/marker_1.png'
-
-image = cv2.imread(image_path)
-marker = cv2.imread(marker_path)
-
-frame_height, frame_width, _ = image.shape
-
-fx = 600.0
-fy = 600.0
-cx = frame_width / 2
-cy = frame_height / 2
-k1 = 0.0
-k2 = 0.0
-p1 = 0.0
-p2 = 0.0
-k3 = 0.0
-
-# Construct the camera matrix and distortion coefficients
-cameraMatrix = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], dtype=np.float32)
-distCoeffs = np.array([k1, k2, p1, p2, k3], dtype=np.float32)
-
 # Define a function to calculate the angle between two vectors
 def angle_between_vectors(v1, v2):
     dot_product = np.dot(v1, v2)
@@ -412,7 +390,3 @@ def detect_marker_on_frame(frame, original_markers, cameraMatrix, distCoeffs, is
         cv2.destroyAllWindows()
     
     return frame
-
-
-# detect_marker_on_frame(image,marker, 1)
-# test(image_path=image_path, marker_path=marker_path)
