@@ -68,8 +68,10 @@ conda remove -n ENV_NAME --all
 2. Delete the local repository.
 
 ## Virtual Sword Display Modes
-After running the program, the device's default webcam will be used to capture the image. The image will be processed and the result will be displayed in a new window. In this project we use ArUcO markers that can be found [here](https://chev.me/arucogen/).
+After running the program, the device's default webcam will be used to capture the image. The image will be processed and the result will be displayed in a new window.
 The user can then display a virtual sword using one of two methods:
+
+**Note:** In this project we use ArUcO markers that can be found [here](https://chev.me/arucogen/).
 
 ### Simple Mode - Flat Cardboard Cutout (2 ArUcO Markers)
 - A planar object with the markers 0 and 1.
