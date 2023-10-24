@@ -71,8 +71,9 @@ conda remove -n ENV_NAME --all
 After running the program, the device's default webcam will be used to capture the image. The image will be processed and the result will be displayed in a new window.
 The user can then display a virtual sword using one of two methods:
 
-### Simple Mode - Flat Cardboard Cutout (2 Artoolkit Markers)
-- [!] ToDo: Insert Instructions here on how to print the cardboard cutout, and which markers and their IDs to put on each cube face.
+### Simple Mode - Flat Cardboard Cutout (2 ArUco Markers)
+- A flat card with a handle located at the bottom. It features two printed markers, namely [Marker_0](https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/img/samples/marker_0.png) and [Marker_1](https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/img/samples/marker_0.png). 
+- The recommended size for these markers is 15cm x 15cm.
 
 ### Advanced Mode - Handheld Cube (5 ArUco Markers)
 - [!] ToDo: Insert Instructions here on how to print the cube, and which markers and their IDs to put on each cube face.
@@ -85,3 +86,9 @@ The user can then display a virtual sword using one of two methods:
 - [Luis Guimaraes](https://github.com/luismrguimaraes) / up202204188@edu.fe.up.pt
 
 - [Ricardo Gonçalves Pinto](https://github.com/ricas00) / up201806849@edu.fe.up.pt
+
+# License
+This project is licensed under the Apache License, Version 2.0.
+
+For the complete text of the Apache License, please refer to the [Apache License](https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/LICENSE).
+
