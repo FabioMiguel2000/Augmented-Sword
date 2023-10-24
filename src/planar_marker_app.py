@@ -5,9 +5,6 @@ from marker_detection import detect_marker_on_frame
 import cv2
 import numpy as np
 
-# Load the image in which you want to detect the marker
-image = cv2.imread("image_with_marker.jpg")
-
 # Initialize the webcam (you may need to change the camera index if you have multiple cameras)
 cap = cv2.VideoCapture(0)
 
