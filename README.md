@@ -74,17 +74,19 @@ The user can then display a virtual sword using one of two methods:
 **Note:** In this project we use ArUcO markers that can be found [here](https://chev.me/arucogen/).
 
 ### Simple Mode - Flat Cardboard Cutout (2 ArUcO Markers)
-- A planar object with the markers 0 and 1.
+- A flat card with a handle located at the bottom. It features two printed markers with the IDs 0 and 1, namely [Marker_0](https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/img/samples/marker_0.png) and [Marker_1](https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/img/samples/marker_0.png).
+- The one we used is 15cm x 15cm, and looks like the following:
+<p align="center">
+   <img width="412" alt="image" src="https://github.com/FabioMiguel2000/Augmented-Sword/assets/100025288/4c706893-c2cf-4c8f-81e2-4ed528dfca9d">
+</p>
 
 ### Advanced Mode - Handheld Cube (5 ArUco Markers)
 - A cube with 5 faces, where the markers from 1 to 4 are placed on the side faces without any rotation and the marker 0 is placed on the top face, like in the following picture:
-<img width="412" alt="image" src="https://github.com/FabioMiguel2000/Augmented-Sword/assets/100025288/3c3f4e86-b50b-4cf0-b639-415a39e9faa2">
+<p align="center">
+   <img width="412" alt="image" src="https://github.com/FabioMiguel2000/Augmented-Sword/assets/100025288/fabefdfd-310c-464a-9203-801eff754391"
+</p>
 
+# License
+This project is licensed under the Apache License, Version 2.0.
 
-## Group Members
-
-- [Fabio Huang](https://github.com/FabioMiguel2000) / up201806829@fe.up.pt
-
-- [Luis Guimaraes](https://github.com/luismrguimaraes) / up202204188@edu.fe.up.pt
-
-- [Ricardo Gonçalves Pinto](https://github.com/ricas00) / up201806849@edu.fe.up.pt
+For the complete text of the Apache License, please refer to the [Apache License](https://github.com/FabioMiguel2000/Augmented-Sword/blob/main/LICENSE).
