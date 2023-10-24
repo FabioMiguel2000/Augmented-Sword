@@ -75,12 +75,14 @@ The user can then display a virtual sword using one of two methods:
 
 ### Simple Mode - Flat Cardboard Cutout (2 ArUcO Markers)
 - A planar object with the markers 0 and 1.
+<p align="center">
+   <img width="412" alt="image" src="https://github.com/FabioMiguel2000/Augmented-Sword/assets/100025288/4c706893-c2cf-4c8f-81e2-4ed528dfca9d">
+</p>
 
 ### Advanced Mode - Handheld Cube (5 ArUco Markers)
 - A cube with 5 faces, where the markers from 1 to 4 are placed on the side faces without any rotation and the marker 0 is placed on the top face, like in the following picture:
 <p align="center">
    <img width="412" alt="image" src="https://github.com/FabioMiguel2000/Augmented-Sword/assets/100025288/fabefdfd-310c-464a-9203-801eff754391"
-
 </p>
 
 ## Group Members
