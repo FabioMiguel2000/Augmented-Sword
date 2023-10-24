@@ -76,6 +76,8 @@ The user can then display a virtual sword using one of two methods:
 
 ### Advanced Mode - Handheld Cube (5 ArUco Markers)
 - A cube with 5 faces, where the markers from 1 to 4 are placed on the side faces without any rotation and the marker 0 is placed on the top face, like in the following picture:
+<img width="412" alt="image" src="https://github.com/FabioMiguel2000/Augmented-Sword/assets/100025288/3c3f4e86-b50b-4cf0-b639-415a39e9faa2">
+
 
 ## Group Members
 
