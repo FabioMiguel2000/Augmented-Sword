@@ -48,7 +48,7 @@ def image_binarization(image, THRESHOLD_VALUE = 128, USE_OTSU_METHOD = 1, INVERT
 
     return binary_image
 
-def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.7, ASPECT_RATIO_MAX = 1.45, MIN_AREA_THRESHOLD = 2000):
+def connected_components(binary_image, image, ASPECT_RATIO_MIN = 0.3, ASPECT_RATIO_MAX = 1.8, MIN_AREA_THRESHOLD = 2000):
     # `num_labels` gives the total number of labeled regions
     # `labeled_image` is an image with each pixel labeled with its region's ID
     # `stats` is a NumPy array containing statistics for each labeled region
@@ -375,7 +375,7 @@ def detect_marker_on_frame(frame, original_markers, cameraMatrix, distCoeffs, is
                 original_marker = cv2.cvtColor(original_marker, cv2.COLOR_BGR2GRAY)
                 result = cv2.matchTemplate(original_marker, normalized_square_gray, cv2.TM_CCORR_NORMED)
             
-                if result > 0.95 and result > best_result:
+                if result > 0.85 and result > best_result:
                     rotation_count = i
                     detected_marker_corners = selected_corners
                     detected_marker = normalized_square_gray
